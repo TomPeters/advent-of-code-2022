@@ -11,14 +11,14 @@ public class Day2Tests
     public void Part1_WorksForSampleData()
     {
         var game = ParseInput(FileHelper.ReadFromFile("Day2", "Sample.txt"));
-        Assert.Equal(15, Day2Puzzle.GetTotalScore(game));
+        Assert.Equal(15, Day2Puzzle.GetTotalScore(game, new Part1PlayerStrategy()));
     }
 
     [Fact]
     public void Part2_WorksForRealData()
     {
         var game = ParseInput(FileHelper.ReadFromFile("Day2", "RealData.txt"));
-        Assert.Equal(11449, Day2Puzzle.GetTotalScore(game));
+        Assert.Equal(11449, Day2Puzzle.GetTotalScore(game, new Part1PlayerStrategy()));
     }
 
     static Game ParseInput(string input)
@@ -29,7 +29,7 @@ public class Day2Tests
             var opponentHandShapeString = shapesInput[0];
             var playersHandShapeString = shapesInput[1];
             return new Round(GetOpponentsHandShape(opponentHandShapeString),
-                GetPlayersHandShape(playersHandShapeString));
+                GetEncodedPlayersHandShape(playersHandShapeString));
         }).ToArray();
         return new Game(rounds);
     }
@@ -43,12 +43,12 @@ public class Day2Tests
             _ => throw new ArgumentOutOfRangeException(input)
         };
     
-    static HandShape GetPlayersHandShape(string input) =>
+    static EncodedPlayerInstruction GetEncodedPlayersHandShape(string input) =>
         input switch
         {
-            "X" => HandShape.Rock,
-            "Y" => HandShape.Paper,
-            "Z" => HandShape.Scissors,
+            "X" => EncodedPlayerInstruction.X,
+            "Y" => EncodedPlayerInstruction.Y,
+            "Z" => EncodedPlayerInstruction.Z,
             _ => throw new ArgumentOutOfRangeException(input)
         };
 }
