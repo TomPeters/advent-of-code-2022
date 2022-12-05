@@ -35,4 +35,9 @@
       <ProjectReference Include="..\AdventOfCode\AdventOfCode.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="Day1\Sample.txt" />
+      <EmbeddedResource Include="Day1\Sample.txt" />
+    </ItemGroup>
+
 </Project>
