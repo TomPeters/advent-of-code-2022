@@ -32,4 +32,28 @@ public static class EnumerableExtensions
     {
         return Enumerable.Range(start, finish - start + 1);
     }
+
+    public static void ForEach<T>(this IEnumerable<T> source, Action<T, int> action)
+    {
+        var index = 0;
+        using (var enumerator = source.GetEnumerator())
+        {
+            while (enumerator.MoveNext())
+            {
+                action(enumerator.Current, index);
+                index++;
+            }
+        }
+    }
+    
+    public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
+    {
+        using (var enumerator = source.GetEnumerator())
+        {
+            while (enumerator.MoveNext())
+            {
+                action(enumerator.Current);
+            }
+        }
+    }
 }
