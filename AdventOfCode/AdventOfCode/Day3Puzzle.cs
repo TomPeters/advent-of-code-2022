@@ -6,14 +6,30 @@ public class Day3Puzzle
     {
         return rucksacks.Sum(r => r.GetSingleContentInBothCompartments().GetPriority());
     }
+
+    public static int GetSumOfEachGroupsBadgePriority(ElfGroup[] elfGroups)
+    {
+        return elfGroups.Sum(g => g.GetSingleContentInAllRucksacks().GetPriority());
+    }
+}
+
+public record ElfGroup(Rucksack[] Rucksacks)
+{
+    public Content GetSingleContentInAllRucksacks()
+    {
+        var allContentInAllRucksacks = Rucksacks.SelectMany(r => r.AllContents).Distinct();
+
+        var contentThatAppearsInAllRucksacks = allContentInAllRucksacks.Single(content => Rucksacks.All(r => r.AllContents.Contains(content)));
+
+        return contentThatAppearsInAllRucksacks;
+    }
 }
 
 public record Rucksack(Compartment FirstCompartment, Compartment SecondCompartment)
 {
     public Content GetSingleContentInBothCompartments()
     {
-        var allContentTypes =
-            FirstCompartment.Contents.Concat(SecondCompartment.Contents).Distinct();
+        var allContentTypes = AllContents.Distinct();
 
         var contentThatAppearsInBothCompartments =
             allContentTypes
@@ -22,6 +38,8 @@ public record Rucksack(Compartment FirstCompartment, Compartment SecondCompartme
 
         return contentThatAppearsInBothCompartments;
     }
+
+    public Content[] AllContents => FirstCompartment.Contents.Concat(SecondCompartment.Contents).ToArray();
 }
 
 public record Compartment(Content[] Contents);
