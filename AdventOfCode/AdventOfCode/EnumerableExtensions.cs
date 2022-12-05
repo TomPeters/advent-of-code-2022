@@ -23,4 +23,13 @@ public static class EnumerableExtensions
             yield return currentBatch;
         }
     }
+
+    /// <summary>
+    /// Includes the start and finish numbers.
+    /// Finish must be greater than start.
+    /// </summary>
+    public static IEnumerable<int> BoundedRange(int start, int finish)
+    {
+        return Enumerable.Range(start, finish - start + 1);
+    }
 }
