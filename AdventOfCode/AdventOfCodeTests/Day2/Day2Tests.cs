@@ -15,12 +15,26 @@ public class Day2Tests
     }
 
     [Fact]
-    public void Part2_WorksForRealData()
+    public void Part1_WorksForRealData()
     {
         var game = ParseInput(FileHelper.ReadFromFile("Day2", "RealData.txt"));
         Assert.Equal(11449, Day2Puzzle.GetTotalScore(game, new Part1PlayerStrategy()));
     }
 
+    [Fact]
+    public void Part2_WorksForSampleData()
+    {
+        var game = ParseInput(FileHelper.ReadFromFile("Day2", "Sample.txt"));
+        Assert.Equal(12, Day2Puzzle.GetTotalScore(game, new Part2PlayerStrategy()));
+    }
+
+    [Fact]
+    public void Part2_WorksForRealData()
+    {
+        var game = ParseInput(FileHelper.ReadFromFile("Day2", "RealData.txt"));
+        Assert.Equal(13187, Day2Puzzle.GetTotalScore(game, new Part2PlayerStrategy()));
+    }
+    
     static Game ParseInput(string input)
     {
         var rounds = input.Split("\n").Select(roundInput =>

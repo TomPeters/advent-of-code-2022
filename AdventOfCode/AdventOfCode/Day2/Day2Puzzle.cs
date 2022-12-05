@@ -30,6 +30,30 @@ public class Part1PlayerStrategy : IPlayerStrategy
         };
 }
 
+public class Part2PlayerStrategy : IPlayerStrategy
+{
+    public HandShape GetPlayerHandShape(EncodedPlayerInstruction instruction, HandShape opponentsHandShape) =>
+        instruction switch
+        {
+            // Lose
+            EncodedPlayerInstruction.X => opponentsHandShape switch
+            {
+                HandShape.Rock => HandShape.Scissors,
+                HandShape.Paper => HandShape.Rock,
+                HandShape.Scissors => HandShape.Paper
+            },
+            // Draw
+            EncodedPlayerInstruction.Y => opponentsHandShape,
+            // Win
+            EncodedPlayerInstruction.Z => opponentsHandShape switch
+            {
+                HandShape.Rock => HandShape.Paper,
+                HandShape.Paper => HandShape.Scissors,
+                HandShape.Scissors => HandShape.Rock
+            }
+        };
+}
+
 public record Round(HandShape OpponentsHandShape, EncodedPlayerInstruction EncodedPlayerInstruction)
 {
     public int GetScore(IPlayerStrategy playerStrategy)
