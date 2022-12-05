@@ -13,14 +13,28 @@ public class Day5Tests
     public void Part1_WorksForSampleData()
     {
         var (supplies, instructions) = ParseInput(FileHelper.ReadFromFile("Day5", "Sample.txt"));
-        Assert.Equal("CMZ", Day5Puzzle.GetTopCratesAsString(supplies, instructions));
+        Assert.Equal("CMZ", Day5Puzzle.GetTopCratesAsString(supplies, instructions, new CrateMover9000()));
     }
     
     [Fact]
     public void Part1_WorksForRealData()
     {
         var (supplies, instructions) = ParseInput(FileHelper.ReadFromFile("Day5", "RealData.txt"));
-        Assert.Equal("QNHWJVJZW", Day5Puzzle.GetTopCratesAsString(supplies, instructions));
+        Assert.Equal("QNHWJVJZW", Day5Puzzle.GetTopCratesAsString(supplies, instructions, new CrateMover9000()));
+    }
+    
+    [Fact]
+    public void Part2_WorksForSampleData()
+    {
+        var (supplies, instructions) = ParseInput(FileHelper.ReadFromFile("Day5", "Sample.txt"));
+        Assert.Equal("MCD", Day5Puzzle.GetTopCratesAsString(supplies, instructions, new CrateMover9001()));
+    }
+    
+    [Fact]
+    public void Part2_WorksForRealData()
+    {
+        var (supplies, instructions) = ParseInput(FileHelper.ReadFromFile("Day5", "RealData.txt"));
+        Assert.Equal("BPCZJLFJW", Day5Puzzle.GetTopCratesAsString(supplies, instructions, new CrateMover9001()));
     }
 
     static (Supplies supplies, Instruction[] instructions) ParseInput(string input)
