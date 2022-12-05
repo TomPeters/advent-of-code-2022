@@ -2,7 +2,7 @@ namespace AdventOfCode;
 
 public class Day3Puzzle
 {
-    public static int GetResult(Rucksack[] rucksacks)
+    public static int GetSumOfPriorityOfSingleContentInBothCompartmentsOfEachRucksack(Rucksack[] rucksacks)
     {
         return rucksacks.Sum(r => r.GetSingleContentInBothCompartments().GetPriority());
     }

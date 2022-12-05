@@ -11,16 +11,15 @@ public class Day3Tests
     public void Part1_WorksForSampleData()
     {
         var input = ParseInput(FileHelper.ReadFromFile("Day3", "Sample.txt"));
-        Assert.Equal(157, Day3Puzzle.GetResult(input));
+        Assert.Equal(157, Day3Puzzle.GetSumOfPriorityOfSingleContentInBothCompartmentsOfEachRucksack(input));
     }
     
     [Fact]
     public void Part2_WorksForRealData()
     {
         var input = ParseInput(FileHelper.ReadFromFile("Day3", "RealData.txt"));
-        Assert.Equal(7793, Day3Puzzle.GetResult(input));
+        Assert.Equal(7793, Day3Puzzle.GetSumOfPriorityOfSingleContentInBothCompartmentsOfEachRucksack(input));
     }
-
 
     static Rucksack[] ParseInput(string input)
     {
