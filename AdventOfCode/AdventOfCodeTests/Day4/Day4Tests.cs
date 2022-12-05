@@ -20,6 +20,20 @@ public class Day4Tests
         Assert.Equal(464, Day4Puzzle.GetNumberOfAssignmentPairsWhereOneContainsTheOther(assignmentPairs));
     }
     
+    [Fact]
+    public void Part2_WorksForSampleData()
+    {
+        var assignmentPairs = ParseAssignmentPairs(FileHelper.ReadFromFile("Day4", "Sample.txt"));
+        Assert.Equal(4, Day4Puzzle.GetNumberOfAssignmentPairsThatOverlap(assignmentPairs));
+    }
+    
+    [Fact]
+    public void Part2_WorksForRealData()
+    {
+        var assignmentPairs = ParseAssignmentPairs(FileHelper.ReadFromFile("Day4", "RealData.txt"));
+        Assert.Equal(770, Day4Puzzle.GetNumberOfAssignmentPairsThatOverlap(assignmentPairs));
+    }
+    
     static AssignmentPair[] ParseAssignmentPairs(string input)
     {
         return input.Split("\n").Select(assignmentPairInput =>

@@ -6,10 +6,22 @@ public class Day4Puzzle
     {
         return assignmentPairs.Count(p => p.OneAssignmentContainsTheOther());
     }
+    
+    public static int GetNumberOfAssignmentPairsThatOverlap(AssignmentPair[] assignmentPairs)
+    {
+        return assignmentPairs.Count(p => p.AssignmentsOverlap());
+    }
 }
 
 public record AssignmentPair(Assignment FirstAssignment, Assignment SecondAssignment)
 {
+    public bool AssignmentsOverlap()
+    {
+        var firstSectionRange = FirstAssignment.GetSectionRange();
+        var secondSectionRange = SecondAssignment.GetSectionRange();
+        return firstSectionRange.Sections.Intersect(secondSectionRange.Sections).Any();
+    }
+    
     public bool OneAssignmentContainsTheOther()
     {
         var firstSectionRange = FirstAssignment.GetSectionRange();
