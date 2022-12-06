@@ -14,10 +14,24 @@ public class Day6Tests
     }
 
     [Fact]
-    public void Part2_WorksForRealData()
+    public void Part1_WorksForRealData()
     {
         var dataStreamBuffer = ParseInput(FileHelper.ReadFromFile("Day6", "RealData.txt"));
         Assert.Equal(1794, Day6Puzzle.GetNumberOfCharactersProcessedBeforeFirstStartOfPacketMarker(dataStreamBuffer));
+    }
+    
+    [Fact]
+    public void Part2_WorksForSampleData()
+    {
+        var dataStreamBuffer = ParseInput(FileHelper.ReadFromFile("Day6", "Sample.txt"));
+        Assert.Equal(19, Day6Puzzle.GetNumberOfCharactersProcessedBeforeFirstStartOfMessageMarker(dataStreamBuffer));
+    }
+    
+    [Fact]
+    public void Part2_WorksForRealData()
+    {
+        var dataStreamBuffer = ParseInput(FileHelper.ReadFromFile("Day6", "RealData.txt"));
+        Assert.Equal(2851, Day6Puzzle.GetNumberOfCharactersProcessedBeforeFirstStartOfMessageMarker(dataStreamBuffer));
     }
     
     static DataStreamBuffer ParseInput(string input)
