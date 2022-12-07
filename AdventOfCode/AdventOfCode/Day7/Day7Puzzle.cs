@@ -4,12 +4,30 @@ public class Day7Puzzle
 {
     public static int GetSumOfSizeOfDirectoriesGreaterThan(string instructionsString, int sizeThreshold)
     {
-        var rootDirectory = new RootDirectory();
-        rootDirectory.PopulateFromInstructions(ParseInstructions(instructionsString));
+        var rootDirectory = RootDirectory.CreateAndPopulateFromInstructions(ParseInstructions(instructionsString));
+        
         var allDirectoriesBelowSizeThreshold = new[] { rootDirectory }
             .Concat(rootDirectory.GetAllDescendantDirectories())
             .Where(d => d.GetTotalSize() <= sizeThreshold);
+        
         return allDirectoriesBelowSizeThreshold.Sum(d => d.GetTotalSize());
+    }
+    
+    public static int GetSizeOfSmallestDirectoryToDelete(string instructionsString, int desiredFreeSpace, int totalFilesystemCapacity)
+    {
+        var rootDirectory = RootDirectory.CreateAndPopulateFromInstructions(ParseInstructions(instructionsString));
+
+        var maximumAllowedRootDirectorySize = totalFilesystemCapacity - desiredFreeSpace;
+        var currentRootDirectorySize = rootDirectory.GetTotalSize();
+        var sizeSavingsRequired = currentRootDirectorySize - maximumAllowedRootDirectorySize;
+        
+        var directoryToDelete = new[] { rootDirectory }
+            .Concat(rootDirectory.GetAllDescendantDirectories())
+            .Where(d => d.GetTotalSize() > sizeSavingsRequired)
+            .OrderBy(d => d.GetTotalSize())
+            .First();
+        
+        return directoryToDelete.GetTotalSize();
     }
 
     static IEnumerable<IInstruction> ParseInstructions(string instructions)
@@ -44,18 +62,15 @@ public class Day7Puzzle
 
 public class RootDirectory : Directory
 {
-    public RootDirectory() : base("/")
+    public static RootDirectory CreateAndPopulateFromInstructions(IEnumerable<IInstruction> instructions)
     {
-    }
-
-    public void PopulateFromInstructions(IEnumerable<IInstruction> instructions)
-    {
-        Directory currentDirectory = this;
+        var rootDirectory = new RootDirectory();
+        Directory currentDirectory = rootDirectory;
         foreach (var instruction in instructions)
         {
             if (instruction is ChangeDirectoryInstruction changeDirectoryInstruction)
             {
-                currentDirectory = changeDirectoryInstruction.Navigate(currentDirectory, this);
+                currentDirectory = changeDirectoryInstruction.Navigate(currentDirectory, rootDirectory);
             } else if (instruction is ListInstruction listInstruction)
             {
                 listInstruction.RecordListResults(currentDirectory);
@@ -65,6 +80,12 @@ public class RootDirectory : Directory
                 throw new Exception("Instruction not implemented");
             }
         }
+
+        return rootDirectory;
+    }
+    
+    RootDirectory() : base("/")
+    {
     }
 }
 
