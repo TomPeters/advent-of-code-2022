@@ -5,16 +5,13 @@ public static class EnumerableExtensions
     public static IEnumerable<IEnumerable<T>> Batch<T>(this IEnumerable<T> source, int batchSize)
     {
         List<T> currentBatch = new();
-        using (var enumerator = source.GetEnumerator())
+        foreach (var item in source)
         {
-            while (enumerator.MoveNext())
+            currentBatch.Add(item);
+            if (currentBatch.Count == batchSize)
             {
-                currentBatch.Add(enumerator.Current);
-                if (currentBatch.Count == batchSize)
-                {
-                    yield return currentBatch;
-                    currentBatch = new List<T>();
-                }
+                yield return currentBatch;
+                currentBatch = new List<T>();
             }
         }
 
@@ -36,24 +33,18 @@ public static class EnumerableExtensions
     public static void ForEach<T>(this IEnumerable<T> source, Action<T, int> action)
     {
         var index = 0;
-        using (var enumerator = source.GetEnumerator())
+        foreach (var item in source)
         {
-            while (enumerator.MoveNext())
-            {
-                action(enumerator.Current, index);
-                index++;
-            }
+            action(item, index);
+            index++;
         }
     }
     
     public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
     {
-        using (var enumerator = source.GetEnumerator())
+        foreach (var item in source)
         {
-            while (enumerator.MoveNext())
-            {
-                action(enumerator.Current);
-            }
+            action(item);
         }
     }
 }

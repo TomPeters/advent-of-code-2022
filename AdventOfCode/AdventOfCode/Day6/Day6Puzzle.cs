@@ -28,11 +28,9 @@ public record DataStreamBuffer(IEnumerable<char> Characters)
     IEnumerable<Sequence> GetSequences(int length)
     {
         var buffer = new Queue<char>();
-        using var enumerator = Characters.GetEnumerator();
-        
-        while (enumerator.MoveNext())
+        foreach(var currentChar in Characters)
         {
-            buffer.Enqueue(enumerator.Current);
+            buffer.Enqueue(currentChar);
             if (buffer.Count == length)
             {
                 yield return new Sequence(buffer.ToArray());
