@@ -59,6 +59,10 @@
       <None Remove="Day6\Sample.txt" />
       <EmbeddedResource Include="Day6\RealData.txt" />
       <EmbeddedResource Include="Day6\Sample.txt" />
+      <None Remove="Day7\RealData.txt" />
+      <EmbeddedResource Include="Day7\RealData.txt" />
+      <None Remove="Day7\Sample.txt" />
+      <EmbeddedResource Include="Day7\Sample.txt" />
     </ItemGroup>
 
 </Project>
