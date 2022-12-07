@@ -6,7 +6,10 @@ public class Day7Puzzle
     {
         var rootDirectory = new RootDirectory();
         rootDirectory.PopulateFromInstructions(ParseInstructions(instructionsString));
-        return 0;
+        var allDirectoriesBelowSizeThreshold = new[] { rootDirectory }
+            .Concat(rootDirectory.GetAllDescendantDirectories())
+            .Where(d => d.GetTotalSize() <= sizeThreshold);
+        return allDirectoriesBelowSizeThreshold.Sum(d => d.GetTotalSize());
     }
 
     static IEnumerable<IInstruction> ParseInstructions(string instructions)
@@ -86,6 +89,21 @@ public class Directory
         _name = name;
     }
 
+    public IEnumerable<Directory> GetAllDescendantDirectories()
+    {
+        return _childDirectories.Concat(_childDirectories.SelectMany(c => c.GetAllDescendantDirectories()));
+    }
+
+    public int GetTotalSize()
+    {
+        return GetAllDescendantFiles().Sum(f => f.Size);
+    }
+
+    IEnumerable<File> GetAllDescendantFiles()
+    {
+        return GetAllDescendantDirectories().SelectMany(d => d._files).Concat(_files);
+    }
+
     public void RecordChildDirectory(string directoryName)
     {
         GetChildDirectory(directoryName);
@@ -112,13 +130,13 @@ public class Directory
 
 public class File
 {
-    private readonly string _fileName;
-    private readonly int _size;
+    public string FileName { get; }
+    public int Size { get; }
 
     public File(string fileName, int size)
     {
-        _fileName = fileName;
-        _size = size;
+        FileName = fileName;
+        Size = size;
     }
 }
 
