@@ -4,7 +4,8 @@ public class Day7Puzzle
 {
     public static int GetSumOfSizeOfDirectoriesGreaterThan(string instructionsString, int sizeThreshold)
     {
-        var instructions = ParseInstructions(instructionsString);
+        var rootDirectory = new RootDirectory();
+        rootDirectory.PopulateFromInstructions(ParseInstructions(instructionsString));
         return 0;
     }
 
@@ -38,6 +39,89 @@ public class Day7Puzzle
     }
 }
 
+public class RootDirectory : Directory
+{
+    public RootDirectory() : base("/")
+    {
+    }
+
+    public void PopulateFromInstructions(IEnumerable<IInstruction> instructions)
+    {
+        Directory currentDirectory = this;
+        foreach (var instruction in instructions)
+        {
+            if (instruction is ChangeDirectoryInstruction changeDirectoryInstruction)
+            {
+                currentDirectory = changeDirectoryInstruction.Navigate(currentDirectory, this);
+            } else if (instruction is ListInstruction listInstruction)
+            {
+                listInstruction.RecordListResults(currentDirectory);
+            }
+            else
+            {
+                throw new Exception("Instruction not implemented");
+            }
+        }
+    }
+}
+
+public class NonRootDirectory : Directory
+{
+    public Directory ParentDirectory { get; }
+
+    public NonRootDirectory(string name, Directory parentDirectory) : base(name)
+    {
+        ParentDirectory = parentDirectory;
+    }
+}
+
+public class Directory
+{
+    private readonly string _name;
+    private readonly List<NonRootDirectory> _childDirectories = new();
+    private readonly List<File> _files = new();
+    
+    public Directory(string name)
+    {
+        _name = name;
+    }
+
+    public void RecordChildDirectory(string directoryName)
+    {
+        GetChildDirectory(directoryName);
+    }
+
+    public Directory GetChildDirectory(string directoryName)
+    {
+        var knownDirectory = _childDirectories.FirstOrDefault(d => d._name == directoryName);
+        if (knownDirectory is not null)
+        {
+            return knownDirectory;
+        }
+
+        var newDirectory = new NonRootDirectory(directoryName, this);
+        _childDirectories.Add(newDirectory);
+        return newDirectory;
+    }
+
+    public void RecordFile(string fileName, int fileSize)
+    {
+        _files.Add(new File(fileName, fileSize));
+    }
+}
+
+public class File
+{
+    private readonly string _fileName;
+    private readonly int _size;
+
+    public File(string fileName, int size)
+    {
+        _fileName = fileName;
+        _size = size;
+    }
+}
+
 public interface IInstruction
 {
 }
@@ -50,6 +134,22 @@ public class ChangeDirectoryInstruction : IInstruction
     {
         _argument = argument;
     }
+
+    public Directory Navigate(Directory currentDirectory, Directory rootDirectory)
+    {
+        if (_argument == "/") return rootDirectory;
+        if (_argument == "..")
+        {
+            if (currentDirectory is NonRootDirectory nonRootDirectory)
+            {
+                return nonRootDirectory.ParentDirectory;
+            }
+
+            throw new Exception("Tried to get parent of the root directory");
+        }
+
+        return currentDirectory.GetChildDirectory(_argument);
+    }
 }
 
 public class ListInstruction : IInstruction
@@ -60,6 +160,20 @@ public class ListInstruction : IInstruction
     {
         _listResults = listResults;
     }
+
+    public void RecordListResults(Directory directory)
+    {
+        foreach (var listResult in _listResults)
+        {
+            if (listResult is DirectoryListResult directoryListResult)
+            {
+                directory.RecordChildDirectory(directoryListResult.DirectoryName);
+            } else if (listResult is FileListResult fileListResult)
+            {
+                directory.RecordFile(fileListResult.FileName, fileListResult.FileSize);
+            }
+        }
+    }
 }
 
 public interface IListResult
@@ -68,22 +182,22 @@ public interface IListResult
 
 public class DirectoryListResult : IListResult
 {
-    private readonly string _directoryName;
+    public string DirectoryName { get; }
 
     public DirectoryListResult(string directoryName)
     {
-        _directoryName = directoryName;
+        DirectoryName = directoryName;
     }
 }
 
 public class FileListResult : IListResult
 {
-    private readonly string _fileName;
-    private readonly int _fileSize;
+    public string FileName { get; }
+    public int FileSize { get; }
 
     public FileListResult(string fileName, int fileSize)
     {
-        _fileName = fileName;
-        _fileSize = fileSize;
+        FileName = fileName;
+        FileSize = fileSize;
     }
 }
