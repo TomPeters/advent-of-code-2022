@@ -32,7 +32,7 @@ public class Head
 public class Knot
 {
     private readonly Knot? _nextKnot;
-    Position _position = new(0, 0);
+    public Position Position { get; private set; } = new(0, 0);
     private readonly List<Position> _visitedPositions = new();
 
     public static Knot CreateTail()
@@ -49,33 +49,33 @@ public class Knot
     {
         _nextKnot = nextKnot;
         // Include the initial starting position as a visited position
-        _visitedPositions.Add(_position);
+        _visitedPositions.Add(Position);
     }
 
     public void AdjustPosition(Position positionOfKnotBeingFollowed)
     {
-        _position = GetPositionCloserToHeadIfRequired(positionOfKnotBeingFollowed);
-        _visitedPositions.Add(_position);
-        _nextKnot?.AdjustPosition(_position);
+        Position = GetPositionCloserToHeadIfRequired(positionOfKnotBeingFollowed);
+        _visitedPositions.Add(Position);
+        _nextKnot?.AdjustPosition(Position);
     }
 
     Position GetPositionCloserToHeadIfRequired(Position positionOfKnotBeingFollowed)
     {
-        if (Math.Abs(positionOfKnotBeingFollowed.X - _position.X) > 1)
+        if (Math.Abs(positionOfKnotBeingFollowed.X - Position.X) > 1)
         {
-            var newXPosition = positionOfKnotBeingFollowed.X < _position.X ? _position.X - 1 : _position.X + 1;
-            var newYPosition = positionOfKnotBeingFollowed.Y != _position.Y ? positionOfKnotBeingFollowed.Y : _position.Y;
+            var newXPosition = positionOfKnotBeingFollowed.X < Position.X ? Position.X - 1 : Position.X + 1;
+            var newYPosition = positionOfKnotBeingFollowed.Y != Position.Y ? positionOfKnotBeingFollowed.Y : Position.Y;
             return new Position(newXPosition, newYPosition);
         }
 
-        if (Math.Abs(positionOfKnotBeingFollowed.Y - _position.Y) > 1)
+        if (Math.Abs(positionOfKnotBeingFollowed.Y - Position.Y) > 1)
         {
-            var newYPosition = positionOfKnotBeingFollowed.Y < _position.Y ? _position.Y - 1 : _position.Y + 1;
-            var newXPosition = positionOfKnotBeingFollowed.X != _position.X ? positionOfKnotBeingFollowed.X : _position.X;
+            var newYPosition = positionOfKnotBeingFollowed.Y < Position.Y ? Position.Y - 1 : Position.Y + 1;
+            var newXPosition = positionOfKnotBeingFollowed.X != Position.X ? positionOfKnotBeingFollowed.X : Position.X;
             return new Position(newXPosition, newYPosition);
         }
 
-        return _position;
+        return Position;
     }
 
     public IEnumerable<Position> GetVisitedPositions()
