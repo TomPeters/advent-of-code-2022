@@ -63,6 +63,13 @@ public class Knot
     {
         if (Math.Abs(positionOfKnotBeingFollowed.X - Position.X) > 1)
         {
+            // While heads can only move sideways, knots might move diagonally twice in a row
+            if (Math.Abs(positionOfKnotBeingFollowed.Y - Position.Y) > 1)
+            {
+                var newX = positionOfKnotBeingFollowed.X < Position.X ? Position.X - 1 : Position.X + 1;
+                var newY = positionOfKnotBeingFollowed.Y < Position.Y ? Position.Y - 1 : Position.Y + 1;
+                return new Position(newX, newY);
+            }
             var newXPosition = positionOfKnotBeingFollowed.X < Position.X ? Position.X - 1 : Position.X + 1;
             var newYPosition = positionOfKnotBeingFollowed.Y != Position.Y ? positionOfKnotBeingFollowed.Y : Position.Y;
             return new Position(newXPosition, newYPosition);
