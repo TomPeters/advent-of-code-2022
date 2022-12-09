@@ -2,10 +2,11 @@ namespace AdventOfCode.Day9;
 
 public class Day9Puzzle
 {
-    public static int GetNumberOfPositionsVisitedByRopeTail(Input input)
+    public static int GetNumberOfPositionsVisitedByRopeTail(Input input, int numberOfKnots)
     {
-        var tail = new Tail();
-        var head = new Head(tail);
+        var tail = Knot.CreateTail();
+        var firstKnot = Enumerable.Range(0, numberOfKnots - 1).Aggregate(tail, (nextKnot, _) => Knot.CreateIntermediateKnot(nextKnot));
+        var head = new Head(firstKnot);
         input.ApplyMotionsToHead(head);
         return tail.GetVisitedPositions().Distinct().Count();
     }
@@ -13,51 +14,64 @@ public class Day9Puzzle
 
 public class Head
 {
-    private readonly Tail _tail;
-    public Position Position { get; private set; } = new Position(0, 0);
+    private readonly Knot _nextKnot;
+    Position _position = new Position(0, 0);
 
-    public Head(Tail tail)
+    public Head(Knot nextKnot)
     {
-        _tail = tail;
+        _nextKnot = nextKnot;
     }
 
     public void Move(Direction direction)
     {
-        Position = Position.GetAdjacentPosition(direction);
-        _tail.AdjustPosition(Position);
+        _position = _position.GetAdjacentPosition(direction);
+        _nextKnot.AdjustPosition(_position);
     }
 }
 
-public class Tail
+public class Knot
 {
+    private readonly Knot? _nextKnot;
     Position _position = new(0, 0);
     private readonly List<Position> _visitedPositions = new();
 
-    public Tail()
+    public static Knot CreateTail()
     {
+        return new Knot(null);
+    }
+
+    public static Knot CreateIntermediateKnot(Knot nextKnot)
+    {
+        return new Knot(nextKnot);
+    }
+    
+    Knot(Knot? nextKnot)
+    {
+        _nextKnot = nextKnot;
         // Include the initial starting position as a visited position
         _visitedPositions.Add(_position);
     }
 
-    public void AdjustPosition(Position headPosition)
+    public void AdjustPosition(Position positionOfKnotBeingFollowed)
     {
-        _position = GetPositionCloserToHeadIfRequired(headPosition);
+        _position = GetPositionCloserToHeadIfRequired(positionOfKnotBeingFollowed);
         _visitedPositions.Add(_position);
+        _nextKnot?.AdjustPosition(_position);
     }
 
-    Position GetPositionCloserToHeadIfRequired(Position headPosition)
+    Position GetPositionCloserToHeadIfRequired(Position positionOfKnotBeingFollowed)
     {
-        if (Math.Abs(headPosition.X - _position.X) > 1)
+        if (Math.Abs(positionOfKnotBeingFollowed.X - _position.X) > 1)
         {
-            var newXPosition = headPosition.X < _position.X ? _position.X - 1 : _position.X + 1;
-            var newYPosition = headPosition.Y != _position.Y ? headPosition.Y : _position.Y;
+            var newXPosition = positionOfKnotBeingFollowed.X < _position.X ? _position.X - 1 : _position.X + 1;
+            var newYPosition = positionOfKnotBeingFollowed.Y != _position.Y ? positionOfKnotBeingFollowed.Y : _position.Y;
             return new Position(newXPosition, newYPosition);
         }
 
-        if (Math.Abs(headPosition.Y - _position.Y) > 1)
+        if (Math.Abs(positionOfKnotBeingFollowed.Y - _position.Y) > 1)
         {
-            var newYPosition = headPosition.Y < _position.Y ? _position.Y - 1 : _position.Y + 1;
-            var newXPosition = headPosition.X != _position.X ? headPosition.X : _position.X;
+            var newYPosition = positionOfKnotBeingFollowed.Y < _position.Y ? _position.Y - 1 : _position.Y + 1;
+            var newXPosition = positionOfKnotBeingFollowed.X != _position.X ? positionOfKnotBeingFollowed.X : _position.X;
             return new Position(newXPosition, newYPosition);
         }
 
