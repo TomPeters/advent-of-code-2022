@@ -4,8 +4,12 @@ public class Day8Puzzle
 {
     public static int GetNumberOfVisibleTrees(Forest forest)
     {
-        var heights = forest.GetAllVisibleTrees().Select(t => t.Height).ToArray();
         return forest.GetAllVisibleTrees().Count();
+    }
+
+    public static int GetHighestScenicScore(Forest forest)
+    {
+        return forest.GetHighestScenicScore();
     }
 }
 
@@ -15,6 +19,11 @@ public record Forest(Tree[] Trees)
     {
         var allDirections = (Direction[])Enum.GetValues(typeof(Direction));
         return Trees.Where(t => allDirections.Any(t.IsVisibleFromDirection));
+    }
+
+    public int GetHighestScenicScore()
+    {
+        return Trees.Select(t => t.GetScenicScore()).Max();
     }
 }
 
@@ -27,8 +36,6 @@ public class Tree
     {
         _height = height;
     }
-
-    public string Height => _height.ToString();
 
     public void RegisterAdjacentTree(Tree tree, Direction direction)
     {
@@ -46,6 +53,22 @@ public class Tree
         var hasAdjacentTree = _adjacentTrees.TryGetValue(direction, out var adjacentTree);
         if (!hasAdjacentTree) return Enumerable.Empty<Tree>();
         return new[] { adjacentTree! }.Concat(adjacentTree!.GetAllTreesFromDirection(direction));
+    }
+
+    public int GetScenicScore()
+    {
+        var allDirections = (Direction[])Enum.GetValues(typeof(Direction));
+        return allDirections.Select(GetViewingDistance).Aggregate(1, (p, c) => p * c);
+    }
+
+    int GetViewingDistance(Direction direction)
+    {
+        var allTreesInDirection = GetAllTreesFromDirection(direction).ToArray();
+        var count = allTreesInDirection.TakeWhile(t => t._height < _height).Count();
+        
+        // If we didn't reach the edge, then we need to additionally count the last one we found
+        if (count < allTreesInDirection.Count()) return count + 1;
+        return count;
     }
 }
 

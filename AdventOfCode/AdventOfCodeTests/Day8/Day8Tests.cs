@@ -14,10 +14,24 @@ public class Day8Tests
     }
     
     [Fact]
-    public void Part2_WorksForRealData()
+    public void Part1_WorksForRealData()
     {
         var input = ParseInput(FileHelper.ReadFromFile("Day8", "RealData.txt"));
         Assert.Equal(1782, Day8Puzzle.GetNumberOfVisibleTrees(input));
+    }
+    
+    [Fact]
+    public void Part2_WorksForSampleData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day8", "Sample.txt"));
+        Assert.Equal(8, Day8Puzzle.GetHighestScenicScore(input));
+    }
+
+    [Fact]
+    public void Part2_WorksForRealData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day8", "RealData.txt"));
+        Assert.Equal(474606, Day8Puzzle.GetHighestScenicScore(input));
     }
 
     static Forest ParseInput(string input)
