@@ -42,6 +42,22 @@ public class KnotTests
         Assert.Equal(new Position(expectedNewX, expectedNewY), knot.Position);
     }
 
+    [Theory]
+    [InlineData(3, 0, 1, 0)]
+    [InlineData(-3, 0, -1, 0)]
+    [InlineData(0, 4, 0, 1)]
+    [InlineData(0, -5, 0, -1)]
+    [InlineData(4, 4, 1, 1)]
+    [InlineData(6, -5, 1, -1)]
+    [InlineData(-2, -2, -1, -1)]
+    [InlineData(-2, 2, -1, 1)]
+    public void PositionIsEvenFurtherAwayFromHead_MovesCloser(int x, int y, int expectedNewX, int expectedNewY)
+    {
+        var knot = Knot.CreateTail();
+        knot.AdjustPosition(new Position(x, y));
+        Assert.Equal(new Position(expectedNewX, expectedNewY), knot.Position);
+    }
+
     [Fact]
     public void KnotChain_MoveHead_MovesTail()
     {
