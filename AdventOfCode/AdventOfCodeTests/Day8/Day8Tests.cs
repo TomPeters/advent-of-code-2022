@@ -12,6 +12,13 @@ public class Day8Tests
         var input = ParseInput(FileHelper.ReadFromFile("Day8", "Sample.txt"));
         Assert.Equal(21, Day8Puzzle.GetNumberOfVisibleTrees(input));
     }
+    
+    [Fact]
+    public void Part2_WorksForRealData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day8", "RealData.txt"));
+        Assert.Equal(1782, Day8Puzzle.GetNumberOfVisibleTrees(input));
+    }
 
     static Forest ParseInput(string input)
     {

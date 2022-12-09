@@ -4,6 +4,7 @@ public class Day8Puzzle
 {
     public static int GetNumberOfVisibleTrees(Forest forest)
     {
+        var heights = forest.GetAllVisibleTrees().Select(t => t.Height).ToArray();
         return forest.GetAllVisibleTrees().Count();
     }
 }
@@ -27,6 +28,8 @@ public class Tree
         _height = height;
     }
 
+    public string Height => _height.ToString();
+
     public void RegisterAdjacentTree(Tree tree, Direction direction)
     {
         _adjacentTrees[direction] = tree;
@@ -34,9 +37,15 @@ public class Tree
 
     public bool IsVisibleFromDirection(Direction direction)
     {
+        var treesInDirection = GetAllTreesFromDirection(direction);
+        return treesInDirection.All(t => t._height < _height);
+    }
+
+    IEnumerable<Tree> GetAllTreesFromDirection(Direction direction)
+    {
         var hasAdjacentTree = _adjacentTrees.TryGetValue(direction, out var adjacentTree);
-        if (!hasAdjacentTree) return true;
-        return adjacentTree!._height < _height && adjacentTree.IsVisibleFromDirection(direction);
+        if (!hasAdjacentTree) return Enumerable.Empty<Tree>();
+        return new[] { adjacentTree! }.Concat(adjacentTree!.GetAllTreesFromDirection(direction));
     }
 }
 
