@@ -20,6 +20,31 @@ public class Day10Tests
         var input = ParseInput(FileHelper.ReadFromFile("Day10", "RealData.txt"));
         Assert.Equal(16480, Day10Puzzle.GetSumOfSignalStrengths(input, GetCyclesToSum()));
     }
+    
+    [Fact]
+    public void Part2_WorksForSampleData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day10", "Sample.txt"));
+        // PLEFULPB
+        Assert.Equal(@"##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....", Day10Puzzle.GetCRTOutput(input));
+    }
+    
+    [Fact]
+    public void Part2_WorksForRealData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day10", "RealData.txt"));
+        Assert.Equal(@"###..#....####.####.#..#.#....###..###..
+#..#.#....#....#....#..#.#....#..#.#..#.
+#..#.#....###..###..#..#.#....#..#.###..
+###..#....#....#....#..#.#....###..#..#.
+#....#....#....#....#..#.#....#....#..#.
+#....####.####.#.....##..####.#....###..", Day10Puzzle.GetCRTOutput(input));
+    }
 
     static IEnumerable<int> GetCyclesToSum() => Enumerable.Range(1, 6).Select(i => i * 40 - 20);
 
