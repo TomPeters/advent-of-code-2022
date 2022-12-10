@@ -38,7 +38,7 @@ public class Day9Tests
     public void Part2_WorksForRealData()
     {
         var input = ParseInput(FileHelper.ReadFromFile("Day9", "RealData.txt"));
-        Assert.Equal(2677, Day9Puzzle.GetNumberOfPositionsVisitedByRopeTail(input, 9));
+        Assert.Equal(2665, Day9Puzzle.GetNumberOfPositionsVisitedByRopeTail(input, 9));
     }
 
     static Input ParseInput(string input)
