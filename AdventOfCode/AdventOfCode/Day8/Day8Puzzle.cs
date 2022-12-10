@@ -58,7 +58,7 @@ public class Tree
     public int GetScenicScore()
     {
         var allDirections = (Direction[])Enum.GetValues(typeof(Direction));
-        return allDirections.Select(GetViewingDistance).Aggregate(1, (p, c) => p * c);
+        return allDirections.Select(GetViewingDistance).Product();
     }
 
     int GetViewingDistance(Direction direction)
