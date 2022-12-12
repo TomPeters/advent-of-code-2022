@@ -2,22 +2,22 @@ namespace AdventOfCode.Day11;
 
 public class Day11Puzzle
 {
-    public static int GetLevelOfMonkeyBusiness(Monkeys monkeys, int numRounds)
+    public static long GetLevelOfMonkeyBusiness(Monkeys monkeys, ISenseOfReliefOperation senseOfReliefOperation, int numRounds)
     {
-        Enumerable.Range(0, numRounds).ForEach(_ => monkeys.PerformRound());
+        Enumerable.Range(0, numRounds).ForEach(_ => monkeys.PerformRound(senseOfReliefOperation));
         return monkeys.GetMonkeyBusiness();
     }
 }
 
-public record Monkeys(Monkey[] monkeys)
+public record Monkeys(Monkey[] AllMonkeys)
 {
-    public void PerformRound() => monkeys.ForEach(m => m.PerformTurn(this));
+    public void PerformRound(ISenseOfReliefOperation senseOfReliefOperation) => AllMonkeys.ForEach(m => m.PerformTurn(this, senseOfReliefOperation));
 
-    public Monkey GetMonkeyWithId(int monkeyId) => monkeys.Single(m => m.MonkeyId == monkeyId);
+    public Monkey GetMonkeyWithId(int monkeyId) => AllMonkeys.Single(m => m.MonkeyId == monkeyId);
 
-    public int GetMonkeyBusiness()
+    public long GetMonkeyBusiness()
     {
-        return monkeys.Select(m => m.NumberOfInspections).OrderByDescending(i => i).Take(2).Product();
+        return AllMonkeys.Select(m => m.NumberOfInspections).OrderByDescending(i => i).Take(2).Product();
     }
 }
 
@@ -37,18 +37,18 @@ public class Monkey
         _nextMonkeyTestParams = nextMonkeyTestParams;
     }
 
-    public void PerformTurn(Monkeys monkeys)
+    public void PerformTurn(Monkeys monkeys, ISenseOfReliefOperation senseOfReliefOperation)
     {
         while (_items.TryDequeue(out var item))
         {
-            InspectItem(item, monkeys);
+            InspectItem(item, monkeys, senseOfReliefOperation);
         }
     }
 
-    void InspectItem(Item item, Monkeys monkeys)
+    void InspectItem(Item item, Monkeys monkeys, ISenseOfReliefOperation senseOfReliefOperation)
     {
         _operation.AdjustWorryLevel(item);
-        GetBoredWithItem(item);
+        GetBoredWithItem(item, senseOfReliefOperation);
         var nextMonkey = new NextMonkeyTest(monkeys).GetNextMonkeyToThrowItemTo(item, _nextMonkeyTestParams);
         ThrowItemTo(item, nextMonkey);
         NumberOfInspections++;
@@ -59,9 +59,9 @@ public class Monkey
         nextMonkey._items.Enqueue(item);
     }
 
-    void GetBoredWithItem(Item item)
+    void GetBoredWithItem(Item item, ISenseOfReliefOperation senseOfReliefOperation)
     {
-        new SenseOfReliefOperation().AdjustWorryLevel(item);
+        senseOfReliefOperation.AdjustWorryLevel(item);
     }
 }
 
@@ -103,7 +103,19 @@ public class SquareOperation : IOperation
     }
 }
 
-public class SenseOfReliefOperation : IOperation
+public interface ISenseOfReliefOperation
+{
+    void AdjustWorryLevel(Item item);
+}
+
+public class NoReducedWorryOperation : ISenseOfReliefOperation
+{
+    public void AdjustWorryLevel(Item item)
+    {
+    }
+}
+
+public class ReducedWorryOperation : ISenseOfReliefOperation
 {
     public void AdjustWorryLevel(Item item)
     {

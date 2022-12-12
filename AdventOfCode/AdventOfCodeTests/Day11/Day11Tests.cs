@@ -10,13 +10,19 @@ public class Day11Tests
     [Fact]
     public void Part1_WorksForSampleData()
     {
-        Assert.Equal(10605, Day11Puzzle.GetLevelOfMonkeyBusiness(GetSampleMonkeys(), 20));
+        Assert.Equal(10605, Day11Puzzle.GetLevelOfMonkeyBusiness(GetSampleMonkeys(), new ReducedWorryOperation(), 20));
     }
     
     [Fact]
     public void Part1_WorksForRealData()
     {
-        Assert.Equal(95472, Day11Puzzle.GetLevelOfMonkeyBusiness(GetRealMonkeys(), 20));
+        Assert.Equal(95472, Day11Puzzle.GetLevelOfMonkeyBusiness(GetRealMonkeys(), new ReducedWorryOperation(), 20));
+    }
+    
+    [Fact]
+    public void Part2_WorksForSampleData()
+    {
+        Assert.Equal(2713310158L, Day11Puzzle.GetLevelOfMonkeyBusiness(GetSampleMonkeys(), new NoReducedWorryOperation(), 10000));
     }
 
     Monkeys GetSampleMonkeys()
