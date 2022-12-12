@@ -26,6 +26,12 @@ public class Day11Tests
     }
     
     [Fact]
+    public void Part2_WorksForSampleData_After1000Rounds()
+    {
+        Assert.Equal(5204 * 5192, Day11Puzzle.GetLevelOfMonkeyBusiness(GetSampleMonkeys(), new NoReducedWorryOperation(), 1000));
+    }
+    
+    [Fact]
     public void Part2_WorksForSampleData()
     {
         Assert.Equal(2713310158L, Day11Puzzle.GetLevelOfMonkeyBusiness(GetSampleMonkeys(), new NoReducedWorryOperation(), 10000));

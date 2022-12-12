@@ -155,5 +155,5 @@ public class Item
         WorryLevel = startingWorryLevel;
     }
     
-    public int WorryLevel { get; set; }
+    public long WorryLevel { get; set; }
 }
