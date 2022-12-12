@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace AdventOfCode.Day11;
 
 public class Day11Puzzle
@@ -26,7 +28,7 @@ public class Monkey
     public int MonkeyId { get; }
     private Queue<Item> _items;
     private readonly IOperation _operation;
-    private readonly NextMonkeyTestParams _nextMonkeyTestParams;
+    public readonly NextMonkeyTestParams NextMonkeyTestParams;
     public long NumberOfInspections { get; private set; } = 0L;
 
     public Monkey(int monkeyId, Item[] startingItems, IOperation operation, NextMonkeyTestParams nextMonkeyTestParams)
@@ -34,7 +36,7 @@ public class Monkey
         MonkeyId = monkeyId;
         _items = new Queue<Item>(startingItems);
         _operation = operation;
-        _nextMonkeyTestParams = nextMonkeyTestParams;
+        NextMonkeyTestParams = nextMonkeyTestParams;
     }
 
     public void PerformTurn(Monkeys monkeys, ISenseOfReliefOperation senseOfReliefOperation)
@@ -48,8 +50,8 @@ public class Monkey
     void InspectItem(Item item, Monkeys monkeys, ISenseOfReliefOperation senseOfReliefOperation)
     {
         _operation.AdjustWorryLevel(item);
-        GetBoredWithItem(item, senseOfReliefOperation);
-        var nextMonkey = new NextMonkeyTest(monkeys).GetNextMonkeyToThrowItemTo(item, _nextMonkeyTestParams);
+        GetBoredWithItem(item, senseOfReliefOperation, monkeys);
+        var nextMonkey = new NextMonkeyTest(monkeys).GetNextMonkeyToThrowItemTo(item, NextMonkeyTestParams);
         ThrowItemTo(item, nextMonkey);
         NumberOfInspections++;
     }
@@ -59,9 +61,9 @@ public class Monkey
         nextMonkey._items.Enqueue(item);
     }
 
-    void GetBoredWithItem(Item item, ISenseOfReliefOperation senseOfReliefOperation)
+    void GetBoredWithItem(Item item, ISenseOfReliefOperation senseOfReliefOperation, Monkeys monkeys)
     {
-        senseOfReliefOperation.AdjustWorryLevel(item);
+        senseOfReliefOperation.AdjustWorryLevel(item, monkeys);
     }
 }
 
@@ -81,6 +83,7 @@ public class AddOperation : IOperation
             item.WorryLevel += _numberToAdd;
         }
     }
+}
 
 public class MultiplyOperation : IOperation
 {
@@ -113,19 +116,24 @@ public class SquareOperation : IOperation
 
 public interface ISenseOfReliefOperation
 {
-    void AdjustWorryLevel(Item item);
+    void AdjustWorryLevel(Item item, Monkeys monkeys);
 }
 
-public class NoReducedWorryOperation : ISenseOfReliefOperation
+public class ModuloReducedWorryOperation : ISenseOfReliefOperation
 {
-    public void AdjustWorryLevel(Item item)
+    public void AdjustWorryLevel(Item item, Monkeys monkeys)
     {
+        // There's probably a mathematical identity this represents, but I don't what what it is :)
+        // The number we store here should give us the same result when mod'ed with these divisors as if we had stored the original larger number.
+        // This wouldn't work if we were doing different kinds of operations when we increase the worry level, like division.
+        var productOfAllDivisors = monkeys.AllMonkeys.Select(m => m.NextMonkeyTestParams.Divisor).Product();
+        item.WorryLevel %= productOfAllDivisors;
     }
 }
 
 public class ReducedWorryOperation : ISenseOfReliefOperation
 {
-    public void AdjustWorryLevel(Item item)
+    public void AdjustWorryLevel(Item item, Monkeys monkeys)
     {
         item.WorryLevel /= 3;
     }

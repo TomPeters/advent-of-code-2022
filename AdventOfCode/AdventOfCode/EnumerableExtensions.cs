@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace AdventOfCode;
 
 public static class EnumerableExtensions
