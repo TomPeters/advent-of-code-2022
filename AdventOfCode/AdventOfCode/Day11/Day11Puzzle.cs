@@ -76,9 +76,11 @@ public class AddOperation : IOperation
 
     public void AdjustWorryLevel(Item item)
     {
-        item.WorryLevel += _numberToAdd;
+        checked
+        {
+            item.WorryLevel += _numberToAdd;
+        }
     }
-}
 
 public class MultiplyOperation : IOperation
 {
@@ -91,7 +93,10 @@ public class MultiplyOperation : IOperation
 
     public void AdjustWorryLevel(Item item)
     {
-        item.WorryLevel *= _factor;
+        checked
+        {
+            item.WorryLevel *= _factor;
+        }
     }
 }
 
@@ -99,7 +104,10 @@ public class SquareOperation : IOperation
 {
     public void AdjustWorryLevel(Item item)
     {
-        item.WorryLevel *= item.WorryLevel;
+        checked
+        {
+            item.WorryLevel *= item.WorryLevel;
+        }
     }
 }
 
