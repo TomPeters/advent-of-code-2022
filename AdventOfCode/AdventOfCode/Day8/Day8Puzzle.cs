@@ -7,7 +7,7 @@ public class Day8Puzzle
         return forest.GetAllVisibleTrees().Count();
     }
 
-    public static long GetHighestScenicScore(Forest forest)
+    public static int GetHighestScenicScore(Forest forest)
     {
         return forest.GetHighestScenicScore();
     }
@@ -21,7 +21,7 @@ public record Forest(Tree[] Trees)
         return Trees.Where(t => allDirections.Any(t.IsVisibleFromDirection));
     }
 
-    public long GetHighestScenicScore()
+    public int GetHighestScenicScore()
     {
         return Trees.Select(t => t.GetScenicScore()).Max();
     }
@@ -55,7 +55,7 @@ public class Tree
         return new[] { adjacentTree! }.Concat(adjacentTree!.GetAllTreesFromDirection(direction));
     }
 
-    public long GetScenicScore()
+    public int GetScenicScore()
     {
         var allDirections = (Direction[])Enum.GetValues(typeof(Direction));
         return allDirections.Select(GetViewingDistance).Product();

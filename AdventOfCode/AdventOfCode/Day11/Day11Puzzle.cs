@@ -27,7 +27,7 @@ public class Monkey
     private Queue<Item> _items;
     private readonly IOperation _operation;
     private readonly NextMonkeyTestParams _nextMonkeyTestParams;
-    public int NumberOfInspections { get; private set; } = 0;
+    public long NumberOfInspections { get; private set; } = 0L;
 
     public Monkey(int monkeyId, Item[] startingItems, IOperation operation, NextMonkeyTestParams nextMonkeyTestParams)
     {

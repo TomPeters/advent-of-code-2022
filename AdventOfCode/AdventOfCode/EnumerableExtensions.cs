@@ -47,9 +47,14 @@ public static class EnumerableExtensions
             action(item);
         }
     }
-
-    public static long Product(this IEnumerable<int> factors)
+    
+    public static long Product(this IEnumerable<long> factors)
     {
         return factors.Aggregate(1L, (p, c) => p * c);
+    }
+
+    public static int Product(this IEnumerable<int> factors)
+    {
+        return factors.Aggregate(1, (p, c) => p * c);
     }
 }
