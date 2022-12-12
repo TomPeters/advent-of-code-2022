@@ -31,6 +31,7 @@ public class Day11Tests
     static Monkey CreateMonkey(int monkeyId, IEnumerable<int> startingWorryLevels, IOperation operation,
         int testDivisor, int trueMonkeyId, int falseMonkeyId)
     {
-        new Monkey(monkeyId, startingWorryLevels.Select(l => new Item(l)).ToArray(), operation, new NextMonkeyTestParams(testDivisor, trueMonkeyId, falseMonkeyId)),
+        return new Monkey(monkeyId, startingWorryLevels.Select(l => new Item(l)).ToArray(), operation,
+            new NextMonkeyTestParams(testDivisor, trueMonkeyId, falseMonkeyId));
     }
 }
