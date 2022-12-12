@@ -76,7 +76,7 @@ public class AddOperation : IOperation
 
     public void AdjustWorryLevel(Item item)
     {
-        item.WorryLevel += 6;
+        item.WorryLevel += _numberToAdd;
     }
 }
 
