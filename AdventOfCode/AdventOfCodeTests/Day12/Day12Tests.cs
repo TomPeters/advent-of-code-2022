@@ -31,7 +31,7 @@ public class Day12Tests
     public void Part2_WorksForRealData()
     {
         var input = ParseInput(FileHelper.ReadFromFile("Day12", "RealData.txt"));
-        Assert.Equal(352, Day12Puzzle.GetLengthOfShortestPathFromAnyPotentialStartingSquare(input));
+        Assert.Equal(345, Day12Puzzle.GetLengthOfShortestPathFromAnyPotentialStartingSquare(input));
     }
 
 

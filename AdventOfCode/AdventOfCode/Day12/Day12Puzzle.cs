@@ -7,7 +7,7 @@ public class Day12Puzzle
     public static int GetLengthOfShortestPath(Heightmap heightmap)
     {
         var shortestPath = heightmap.GetShortestPathFrom(heightmap.GetStartingSquare());
-        return shortestPath.NumberOfSteps;
+        return shortestPath!.NumberOfSteps;
     }
     
     public static int GetLengthOfShortestPathFromAnyPotentialStartingSquare(Heightmap heightmap)
@@ -27,12 +27,12 @@ public class Heightmap
 
     public IEnumerable<Path> GetShortestPathFromAllPotentialStartingSquares()
     {
-        return _allSquares.Where(s => s.IsPotentialStartingSquare()).Select(GetShortestPathFrom);
+        return _allSquares.Where(s => s.IsPotentialStartingSquare()).Select(GetShortestPathFrom).Where(p => p != null);
     }
 
     public Square GetStartingSquare() => _allSquares.Single(s => s.IsStart());
 
-    public Path GetShortestPathFrom(Square firstSquare)
+    public Path? GetShortestPathFrom(Square firstSquare)
     {
         var squaresToProcess = new Queue<Square>(new[] { firstSquare });
         var shortestPaths = new Dictionary<Square, Path> { { firstSquare, new Path(new []{ firstSquare }) } };
@@ -60,7 +60,7 @@ public class Heightmap
         }
 
         var endSquare = _allSquares.Single(s => s.IsEnd());
-        return shortestPaths[endSquare];
+        return !shortestPaths.ContainsKey(endSquare) ? null : shortestPaths[endSquare];
     }
 }
 
