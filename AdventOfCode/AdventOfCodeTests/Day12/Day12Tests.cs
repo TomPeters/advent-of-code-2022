@@ -1,3 +1,4 @@
+using System.Linq;
 using AdventOfCode.Day12;
 using Xunit;
 
@@ -12,8 +13,29 @@ public class Day12Tests
         Assert.Equal(31, Day12Puzzle.GetLengthOfShortestPath(input));
     }
 
-    static string ParseInput(string input)
+    static Heightmap ParseInput(string input)
     {
-        return input;
+        var squareRows = input.Split("\n").Select(rowInput =>
+         {
+             return rowInput.Select(heightChar => new Square(heightChar)).ToArray();
+         }).ToArray();
+
+         var zipped = squareRows.Zip(squareRows.Skip(1), (treeRow, adjacentTreeRowBelow) => treeRow.Zip(adjacentTreeRowBelow));
+         foreach (var (squareAbove, squareBelow) in zipped.SelectMany(g => g))
+         {
+             Square.Connect(squareAbove, squareBelow);
+         }
+         
+         foreach (var squareRow in squareRows)
+         {
+             foreach (var (leftSquare, rightSquare) in squareRow.Zip(squareRow.Skip(1)))
+             {
+                 Square.Connect(leftSquare, rightSquare);
+             }
+         }
+
+         var allSquares = squareRows.SelectMany(s => s).ToArray();
+
+         return new Heightmap(allSquares);
     }
 }
