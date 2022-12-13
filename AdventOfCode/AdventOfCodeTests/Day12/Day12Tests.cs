@@ -12,6 +12,13 @@ public class Day12Tests
         var input = ParseInput(FileHelper.ReadFromFile("Day12", "Sample.txt"));
         Assert.Equal(31, Day12Puzzle.GetLengthOfShortestPath(input));
     }
+    
+    [Fact]
+    public void Part1_WorksForRealData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day12", "RealData.txt"));
+        Assert.Equal(352, Day12Puzzle.GetLengthOfShortestPath(input));
+    }
 
     static Heightmap ParseInput(string input)
     {

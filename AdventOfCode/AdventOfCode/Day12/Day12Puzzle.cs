@@ -6,7 +6,8 @@ public class Day12Puzzle
 {
     public static int GetLengthOfShortestPath(Heightmap heightmap)
     {
-        return heightmap.GetShortestPathLength();
+        var shortestPath = heightmap.GetShortestPath();
+        return shortestPath.NumberOfSteps;
     }
 }
 
@@ -19,7 +20,7 @@ public class Heightmap
         _allSquares = allSquares;
     }
 
-    public int GetShortestPathLength()
+    public Path GetShortestPath()
     {
         var firstSquare = _allSquares.Single(s => s.IsStart());
         var squaresToProcess = new Queue<Square>(new[] { firstSquare });
@@ -35,7 +36,7 @@ public class Heightmap
                 if (shortestPaths.ContainsKey(nextValidSquare))
                 {
                     var existingShortestPath = shortestPaths[nextValidSquare];
-                    if (existingShortestPath.Length > nextPath.Length)
+                    if (existingShortestPath.NumberOfSteps > nextPath.NumberOfSteps)
                     {
                         shortestPaths[nextValidSquare] = nextPath;
                     }
@@ -48,7 +49,7 @@ public class Heightmap
         }
 
         var endSquare = _allSquares.Single(s => s.IsEnd());
-        return shortestPaths[endSquare].Length;
+        return shortestPaths[endSquare];
     }
 }
 
@@ -66,7 +67,7 @@ public class Path
         return new Path(_squares.Concat(new[] { square }).ToArray());
     }
 
-    public int Length => _squares.Length;
+    public int NumberOfSteps => _squares.Length - 1;
 }
 
 public class Square
@@ -94,12 +95,13 @@ public class Square
     {
         return adjacentSquares.Where(IsValid);
     }
-
+    
+    char Elevation => IsEnd() ? 'z' : IsStart() ? 'a' : _height;
+    
     private bool IsValid(Square adjacentSquare)
     {
-        if (IsEnd()) return false;
-        if (adjacentSquare.IsStart()) return false;
-        return adjacentSquare.IsEnd() || _height <= adjacentSquare._height;
+        if (IsEnd()) return false; // Once we get to the end, we don't have to go anywhere else
+        return adjacentSquare.Elevation <= Elevation + 1;
     }
 
     public bool IsStart() => _height == 'S';
