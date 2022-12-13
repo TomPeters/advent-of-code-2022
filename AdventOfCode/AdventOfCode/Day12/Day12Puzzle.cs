@@ -6,8 +6,13 @@ public class Day12Puzzle
 {
     public static int GetLengthOfShortestPath(Heightmap heightmap)
     {
-        var shortestPath = heightmap.GetShortestPath();
+        var shortestPath = heightmap.GetShortestPathFrom(heightmap.GetStartingSquare());
         return shortestPath.NumberOfSteps;
+    }
+    
+    public static int GetLengthOfShortestPathFromAnyPotentialStartingSquare(Heightmap heightmap)
+    {
+        return heightmap.GetShortestPathFromAllPotentialStartingSquares().Select(p => p.NumberOfSteps).Min();
     }
 }
 
@@ -20,9 +25,15 @@ public class Heightmap
         _allSquares = allSquares;
     }
 
-    public Path GetShortestPath()
+    public IEnumerable<Path> GetShortestPathFromAllPotentialStartingSquares()
     {
-        var firstSquare = _allSquares.Single(s => s.IsStart());
+        return _allSquares.Where(s => s.IsPotentialStartingSquare()).Select(GetShortestPathFrom);
+    }
+
+    public Square GetStartingSquare() => _allSquares.Single(s => s.IsStart());
+
+    public Path GetShortestPathFrom(Square firstSquare)
+    {
         var squaresToProcess = new Queue<Square>(new[] { firstSquare });
         var shortestPaths = new Dictionary<Square, Path> { { firstSquare, new Path(new []{ firstSquare }) } };
         while (squaresToProcess.TryDequeue(out var currentSquare))
@@ -102,6 +113,11 @@ public class Square
     {
         if (IsEnd()) return false; // Once we get to the end, we don't have to go anywhere else
         return adjacentSquare.Elevation <= Elevation + 1;
+    }
+
+    public bool IsPotentialStartingSquare()
+    {
+        return IsStart() || _height == 'a';
     }
 
     public bool IsStart() => _height == 'S';
