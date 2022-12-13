@@ -1,3 +1,4 @@
+using System;
 using AdventOfCode.Day13;
 using Xunit;
 
@@ -12,8 +13,8 @@ public class Day13Tests
         Assert.Equal(13, Day13Puzzle.GetSumOfIndicesOfCorrectlyOrderedPairs(input));
     }
 
-    private string ParseInput(string input)
+    private PacketPair[] ParseInput(string input)
     {
-        return input;
+        return Array.Empty<PacketPair>();
     }
 }
