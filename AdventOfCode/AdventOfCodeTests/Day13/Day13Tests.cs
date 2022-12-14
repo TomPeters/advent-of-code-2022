@@ -15,6 +15,13 @@ public class Day13Tests
         Assert.Equal(13, Day13Puzzle.GetSumOfIndicesOfCorrectlyOrderedPairs(input));
     }
 
+    [Fact]
+    public void Part1_WorksForRealData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day13", "RealData.txt"));
+        Assert.Equal(13, Day13Puzzle.GetSumOfIndicesOfCorrectlyOrderedPairs(input));
+    }
+    
     private PacketPair[] ParseInput(string input)
     {
         return input.Split("\n\n").Select(pairInput =>
@@ -31,7 +38,7 @@ public class Day13Tests
             return new IntegerPacket(parsedInt);
         }
 
-        var contentsExcludingEndBrackets = input.Substring(1, input.Length - 1);
+        var contentsExcludingEndBrackets = input.Substring(1, input.Length - 2);
         var packetStrings = SplitByTopLevelComma(contentsExcludingEndBrackets);
         var subPackets = packetStrings.Select(ParseCompletePacket);
         return new ListPacket(subPackets.ToArray());
@@ -43,15 +50,15 @@ public class Day13Tests
         var currentPacketString = "";
         foreach(var currentChar in input)
         {
-            if (currentChar == '[') bracketsCount++;
-            if (currentChar == ']') bracketsCount--;
-            if (currentChar == ',')
+            if (currentChar == ',' && bracketsCount == 0)
             {
                 yield return currentPacketString;
                 currentPacketString = "";
             }
             else
             {
+                if (currentChar == '[') bracketsCount++;
+                if (currentChar == ']') bracketsCount--;
                 currentPacketString += currentChar;
             }
         }

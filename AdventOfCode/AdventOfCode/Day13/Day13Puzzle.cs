@@ -8,7 +8,7 @@ public class Day13Puzzle
         {
             var (pair, _) = tuple;
             return pair.IsInCorrectOrder();
-        }).Select((tuple) => tuple.i).Sum();
+        }).Select((tuple) => tuple.i + 1).Sum();
     }
 }
 
