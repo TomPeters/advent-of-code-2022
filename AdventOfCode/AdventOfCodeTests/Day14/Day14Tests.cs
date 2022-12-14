@@ -9,7 +9,7 @@ public class Day14Tests
     [Fact]
     public void Part1_WorksForSampleData()
     {
-        var input = ParseInput(FileHelper.ReadFromFile("Day13", "Sample.txt"));
+        var input = ParseInput(FileHelper.ReadFromFile("Day14", "Sample.txt"));
         Assert.Equal(24, Day14Puzzle.GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(input));
     }
 
