@@ -10,14 +10,14 @@ public class Day14Tests
     public void Part1_WorksForSampleData()
     {
         var input = ParseInput(FileHelper.ReadFromFile("Day14", "Sample.txt"));
-        Assert.Equal(24, Day14Puzzle.GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(input));
+        Assert.Equal(24, Day14Puzzle.GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(input, new FallsForeverCondition()));
     }
     
     [Fact]
-    public void Part1_WorksForRealDataData()
+    public void Part1_WorksForRealData()
     {
         var input = ParseInput(FileHelper.ReadFromFile("Day14", "RealData.txt"));
-        Assert.Equal(614, Day14Puzzle.GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(input));
+        Assert.Equal(614, Day14Puzzle.GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(input, new FallsForeverCondition()));
     }
 
     private AllRockPaths ParseInput(string input)

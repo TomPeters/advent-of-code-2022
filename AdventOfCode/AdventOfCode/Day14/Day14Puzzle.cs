@@ -2,16 +2,26 @@ namespace AdventOfCode.Day14;
 
 public class Day14Puzzle
 {
-    public static int GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(AllRockPaths allRockPaths)
+    public static int GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(AllRockPaths allRockPaths, ISandCondition sandCondition)
     {
         var grid = new Grid(allRockPaths);
         var sandSource = new SandSource(grid);
-        while (sandSource.DropSand() == SandDropResult.CameToRest)
+        while (sandSource.DropSand(sandCondition) == SandDropResult.CameToRest)
         {
         }
 
         return sandSource.CountOfSandDropped;
     }
+}
+
+public interface ISandCondition
+{
+    bool AllRequiredSandHasBeenDropped(Sand sand);
+}
+
+public class FallsForeverCondition : ISandCondition
+{
+    public bool AllRequiredSandHasBeenDropped(Sand sand) => sand.IsFallingForever();
 }
 
 public class SandSource
@@ -25,13 +35,13 @@ public class SandSource
         _grid = grid;
     }
 
-    public SandDropResult DropSand()
+    public SandDropResult DropSand(ISandCondition condition)
     {
         var sand = new Sand(SourceCoord, _grid);
         _grid.AddSand(sand);
         while (sand.TryMove())
-            if (sand.IsFallingForever())
-                return SandDropResult.FallsForever;
+            if (condition.AllRequiredSandHasBeenDropped(sand))
+                return SandDropResult.FinalSandDropped;
 
         CountOfSandDropped++;
         return SandDropResult.CameToRest;
@@ -41,7 +51,7 @@ public class SandSource
 public enum SandDropResult
 {
     CameToRest,
-    FallsForever
+    FinalSandDropped
 }
 
 public class Grid
