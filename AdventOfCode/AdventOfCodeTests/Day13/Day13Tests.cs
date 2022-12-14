@@ -19,7 +19,21 @@ public class Day13Tests
     public void Part1_WorksForRealData()
     {
         var input = ParseInput(FileHelper.ReadFromFile("Day13", "RealData.txt"));
-        Assert.Equal(13, Day13Puzzle.GetSumOfIndicesOfCorrectlyOrderedPairs(input));
+        Assert.Equal(5292, Day13Puzzle.GetSumOfIndicesOfCorrectlyOrderedPairs(input));
+    }
+    
+    [Fact]
+    public void Part2_WorksForSampleData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day13", "Sample.txt"));
+        Assert.Equal(140, Day13Puzzle.GetDecoderKey(input));
+    }
+    
+    [Fact]
+    public void Part2_WorksForRealData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day13", "RealData.txt"));
+        Assert.Equal(23868, Day13Puzzle.GetDecoderKey(input));
     }
     
     private PacketPair[] ParseInput(string input)

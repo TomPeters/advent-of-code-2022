@@ -10,11 +10,34 @@ public class Day13Puzzle
             return pair.IsInCorrectOrder();
         }).Select((tuple) => tuple.i + 1).Sum();
     }
+
+    public static int GetDecoderKey(PacketPair[] packetPairs)
+    {
+        var dividerPackets = new IPacket[]
+        {
+            new ListPacket(new[] { new ListPacket(new[] { new IntegerPacket(2) }) }),
+            new ListPacket(new[] { new ListPacket(new[] { new IntegerPacket(6) }) }),
+        };
+        var allPackets = packetPairs.SelectMany(pair => pair.GetAllPackets()).Concat(dividerPackets);
+        var orderedPackets = allPackets.OrderBy(packet => packet).ToArray();
+        var indicesOfDividerPackets = orderedPackets.Select((packet, i) => (packet, i)).Where(tuple =>
+        {
+            var (packet, _) = tuple;
+            return dividerPackets.Contains(packet);
+        }).Select((tuple) => tuple.i + 1);
+        return indicesOfDividerPackets.Product();
+    }
 }
 
 public record PacketPair(IPacket Packet1, IPacket Packet2)
 {
     public bool IsInCorrectOrder() => Packet1.CompareTo(Packet2) < 0;
+
+    public IEnumerable<IPacket> GetAllPackets()
+    {
+        yield return Packet1;
+        yield return Packet2;
+    }
 }
 
 public interface IPacket : IComparable<IPacket>
