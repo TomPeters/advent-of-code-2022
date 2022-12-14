@@ -2,9 +2,9 @@ namespace AdventOfCode.Day14;
 
 public class Day14Puzzle
 {
-    public static int GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(AllRockPaths allRockPaths, ISandCondition sandCondition)
+    public static int GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(AllRockPaths allRockPaths, ISandCondition sandCondition, bool hasFloor)
     {
-        var grid = new Grid(allRockPaths);
+        var grid = new Grid(allRockPaths, hasFloor);
         var sandSource = new SandSource(grid);
         while (sandSource.DropSand(sandCondition) == SandDropResult.CameToRest)
         {
@@ -24,10 +24,15 @@ public class FallsForeverCondition : ISandCondition
     public bool AllRequiredSandHasBeenDropped(Sand sand) => sand.IsFallingForever();
 }
 
+public class PilesUpToSandSourceCoordinateCondition : ISandCondition
+{
+    public bool AllRequiredSandHasBeenDropped(Sand sand) => sand.Coordinate.Equals(SandSource.SourceCoord);
+}
+
 public class SandSource
 {
     private readonly Grid _grid;
-    static readonly Coordinate SourceCoord = new(500, 0);
+    public static readonly Coordinate SourceCoord = new(500, 0);
     public int CountOfSandDropped { get; private set; } = 0;
 
     public SandSource(Grid grid)
@@ -40,10 +45,17 @@ public class SandSource
         var sand = new Sand(SourceCoord, _grid);
         _grid.AddSand(sand);
         while (sand.TryMove())
+            // In the case things falling infinitely, the sand can always be moved
             if (condition.AllRequiredSandHasBeenDropped(sand))
                 return SandDropResult.FinalSandDropped;
 
+        
         CountOfSandDropped++;
+
+        // In the case of an infinite floor, the sand can't move when it reaches this condition
+        if (condition.AllRequiredSandHasBeenDropped(sand))
+            return SandDropResult.FinalSandDropped;
+        
         return SandDropResult.CameToRest;
     }
 }
@@ -56,18 +68,25 @@ public enum SandDropResult
 
 public class Grid
 {
+    private readonly bool _hasFloor;
     private readonly Coordinate[] _rockCoordinates;
     private readonly List<Sand> _allSand = new List<Sand>();
     private readonly int _lowestYCoord;
 
-    public Grid(AllRockPaths allRockPaths)
+    public Grid(AllRockPaths allRockPaths, bool hasFloor)
     {
+        _hasFloor = hasFloor;
         _rockCoordinates = allRockPaths.AllCoordinatesThatContainRocks().ToArray();
         _lowestYCoord = _rockCoordinates.Select(c => c.Y).Max();
     }
 
     public bool IsViableNextPositionForSand(Coordinate coordinate)
     {
+        if (_hasFloor && coordinate.Y >= _lowestYCoord + 2)
+        {
+            // It has hit the infinite floor
+            return false;
+        }
         return !_rockCoordinates.Concat(_allSand.Select(s => s.Coordinate)).Contains(coordinate);
     }
 

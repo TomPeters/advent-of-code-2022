@@ -10,14 +10,28 @@ public class Day14Tests
     public void Part1_WorksForSampleData()
     {
         var input = ParseInput(FileHelper.ReadFromFile("Day14", "Sample.txt"));
-        Assert.Equal(24, Day14Puzzle.GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(input, new FallsForeverCondition()));
+        Assert.Equal(24, Day14Puzzle.GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(input, new FallsForeverCondition(), false));
     }
     
     [Fact]
     public void Part1_WorksForRealData()
     {
         var input = ParseInput(FileHelper.ReadFromFile("Day14", "RealData.txt"));
-        Assert.Equal(614, Day14Puzzle.GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(input, new FallsForeverCondition()));
+        Assert.Equal(614, Day14Puzzle.GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(input, new FallsForeverCondition(), false));
+    }
+    
+    [Fact]
+    public void Part2_WorksForSampleData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day14", "Sample.txt"));
+        Assert.Equal(93, Day14Puzzle.GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(input, new PilesUpToSandSourceCoordinateCondition(), true));
+    }
+        
+    [Fact]
+    public void Part2_WorksForRealData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day14", "RealData.txt"));
+        Assert.Equal(93, Day14Puzzle.GetUnitsOfSandThatFlowBeforeTheRestFlowIntoTheAbyss(input, new PilesUpToSandSourceCoordinateCondition(), true));
     }
 
     private AllRockPaths ParseInput(string input)
