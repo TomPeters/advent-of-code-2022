@@ -12,6 +12,13 @@ public class Day15Tests
         var input = ParseInput(FileHelper.ReadFromFile("Day15", "Sample.txt"));
         Assert.Equal(26, Day15Puzzle.GetNumberOfPositionsThatCannotContainABeacon(input, 10));
     }
+    
+    [Fact]
+    public void Part1_WorksForRealData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day15", "RealData.txt"));
+        Assert.Equal(26, Day15Puzzle.GetNumberOfPositionsThatCannotContainABeacon(input, 2000000));
+    }
 
     private AllMeasurements ParseInput(string input)
     {
