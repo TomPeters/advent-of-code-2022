@@ -4,10 +4,24 @@ public class Day15Puzzle
 {
     public static int GetNumberOfPositionsThatCannotContainABeacon(AllMeasurements allMeasurements, int rowNumber)
     {
-        var allBeaconCoordinates = allMeasurements.Measurements.Select(m => m.beacon.Coordinate).Distinct();
-        var allLocationsWhereThereCantBeABeacon = allMeasurements.Measurements
-            .SelectMany(m => m.GetCoordinatesWhereThereCantBeABeacon()).Except(allBeaconCoordinates);
-        return allLocationsWhereThereCantBeABeacon.Count(l => l.Y == rowNumber);
+        var allXCoords = allMeasurements.Measurements.SelectMany(m => new[] { m.beacon.Coordinate, m.sensor.Coordinate })
+            .Select(c => c.X).ToArray();
+        var minX = allXCoords.Min();
+        var maxX = allXCoords.Max();
+        var dx = maxX - minX;
+        var centrePoint = (maxX - minX) / 2;
+        var xRange = Enumerable.Range(centrePoint - dx, dx * 2);
+        var possibleCoordinatesToConsider = xRange.Select(x => new Coordinate(x, rowNumber));
+
+        var betweenASensorAndABeacon = possibleCoordinatesToConsider.Where(coordinate =>
+        {
+            var cantBeABeacon = allMeasurements.Measurements.Any(m => m.IsCoordinateBetweenSensorAndBeacon(coordinate));
+            return cantBeABeacon;
+        });
+
+        var allCoordinatesThatCantBeABeacon = betweenASensorAndABeacon.Except(allMeasurements.Measurements.Select(m => m.beacon.Coordinate));
+
+        return allCoordinatesThatCantBeABeacon.Count();
     }
 }
 
@@ -22,6 +36,12 @@ public record Measurement(Sensor sensor, Beacon beacon)
         var yRange = Enumerable.Range(sensor.Coordinate.Y - distanceToBeacon, distanceToBeacon * 2 + 1);
         var surroundingCoordinates = xRange.SelectMany(x => yRange.Select((y) => new Coordinate(x, y)));
         return surroundingCoordinates.Where(c => sensor.Coordinate.GetManhattanDistanceTo(c) <= distanceToBeacon);
+    }
+
+    public bool IsCoordinateBetweenSensorAndBeacon(Coordinate coordinate)
+    {
+        return coordinate.GetManhattanDistanceTo(sensor.Coordinate) <=
+               beacon.Coordinate.GetManhattanDistanceTo(sensor.Coordinate);
     }
 }
 
