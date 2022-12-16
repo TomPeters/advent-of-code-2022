@@ -6,7 +6,26 @@ public class Day15Puzzle
 {
     public static int GetNumberOfPositionsThatCannotContainABeacon(AllMeasurements allMeasurements, int rowNumber)
     {
-        var allXCoords = allMeasurements.Measurements.SelectMany(m => new[] { m.Beacon.Coordinate, m.Sensor.Coordinate })
+        return allMeasurements.GetCoordinatesThatCantBeABeaconInRow(rowNumber).Count();
+    }
+
+    public static long GetTuningFrequencyOfSingleUndetectedCoordinateInRange(AllMeasurements allMeasurements, int minCoordinateValue,
+        int maxCoordinateValue)
+    {
+        checked
+        {
+            var coordinate = allMeasurements.GetSingleCoordinateInRangeOutsideOfSensedRegions(minCoordinateValue,
+                    maxCoordinateValue);
+            return coordinate.X * 4000000L + coordinate.Y;
+        }
+    }
+}
+
+public record AllMeasurements(Measurement[] Measurements)
+{
+    public IEnumerable<Coordinate> GetCoordinatesThatCantBeABeaconInRow(int rowNumber)
+    {
+        var allXCoords = Measurements.SelectMany(m => new[] { m.Beacon.Coordinate, m.Sensor.Coordinate })
             .Select(c => c.X).ToArray();
         var minX = allXCoords.Min() - 1;
         var maxX = allXCoords.Max() + 1;
@@ -17,43 +36,14 @@ public class Day15Puzzle
 
         var betweenASensorAndABeacon = possibleCoordinatesToConsider.Where(coordinate =>
         {
-            var cantBeABeacon = allMeasurements.Measurements.Any(m => m.IsInSensedRegion(coordinate));
+            var cantBeABeacon = Measurements.Any(m => m.IsInSensedRegion(coordinate));
             return cantBeABeacon;
         });
 
-        var allCoordinatesThatCantBeABeacon = betweenASensorAndABeacon.Except(allMeasurements.Measurements.Select(m => m.Beacon.Coordinate));
-
-        return allCoordinatesThatCantBeABeacon.Count();
+        var allCoordinatesThatCantBeABeacon = betweenASensorAndABeacon.Except(Measurements.Select(m => m.Beacon.Coordinate));
+        return allCoordinatesThatCantBeABeacon;
     }
-
-    public static long GetTuningFrequencyOfSingleUndetectedCoordinateInRange(AllMeasurements allMeasurements, int minCoordinateValue,
-        int maxCoordinateValue)
-    {
-        checked
-        {
-            var coordinate =
-                allMeasurements.GetSingleCoordinateInRangeOutsideOfSensedRegions(minCoordinateValue,
-                    maxCoordinateValue);
-            return coordinate.X * 4000000L + coordinate.Y;
-        }
-    }
-
-    // Assume start x and start Y are outside the range of any sensors
-    static IEnumerable<Coordinate> GetCoordinatesWithinRangeOfSensor(int startX, int endX, int y, AllSensedRowSegments allSensedRowSegments)
-    {
-        var currentX = startX;
-        while (currentX <= endX)
-        {
-            var currentCoord = new Coordinate(currentX, y);
-            // if (allSensedRowSegments)
-        }
-
-        throw new NotImplementedException("");
-    }
-}
-
-public record AllMeasurements(Measurement[] Measurements)
-{
+    
     public Coordinate GetSingleCoordinateInRangeOutsideOfSensedRegions(int minCoordinateValue, int maxCoordinateValue)
     {
         var candidateCoordinatesInRange = Measurements.SelectMany(m => m.GetSurroundingCoordinatesOfSensedRegion())
@@ -73,22 +63,10 @@ public record AllMeasurements(Measurement[] Measurements)
 
 public class Measurement
 {
-    private IEnumerable<PairsOfCoordinatesOnTheSameRow> _knownRegionWhereThereCantBeAnyMoreBeacons;
-
     public Measurement(Sensor sensor, Beacon beacon)
     {
         this.Sensor = sensor;
         this.Beacon = beacon;
-        // _knownRegionWhereThereCantBeAnyMoreBeacons = GetSurroundingCoordinatesOfSensedRegion();
-    }
-
-    public IEnumerable<Coordinate> GetAllSensedCoordinates()
-    {
-        var distanceToBeacon = Sensor.Coordinate.GetManhattanDistanceTo(Beacon.Coordinate);
-        var xRange = Enumerable.Range(Sensor.Coordinate.X - distanceToBeacon, distanceToBeacon * 2 + 1);
-        var yRange = Enumerable.Range(Sensor.Coordinate.Y - distanceToBeacon, distanceToBeacon * 2 + 1);
-        var surroundingCoordinates = xRange.SelectMany(x => yRange.Select((y) => new Coordinate(x, y)));
-        return surroundingCoordinates.Where(c => Sensor.Coordinate.GetManhattanDistanceTo(c) <= distanceToBeacon);
     }
 
     public bool IsInSensedRegion(Coordinate coordinate)
@@ -139,62 +117,6 @@ public class Measurement
         });
     }
 }
-
-public class XRange
-{
-    public XRange(int Start, int End)
-    {
-        this.Start = Start;
-        this.End = End;
-    }
-
-    public int Start { get; set; }
-    public int End { get; set; }
-}
-
-public class AllSensedRowSegments
-{
-    private Dictionary<Coordinate, Coordinate> _coordinateLookup;
-
-    public AllSensedRowSegments(IEnumerable<PairsOfCoordinatesOnTheSameRow> allSensedRowSegments)
-    {
-        allSensedRowSegments.GroupBy(s => s.Y).Select(row =>
-        {
-            return row.Aggregate(new List<XRange>(), (allRanges, segment) =>
-            {
-                var existingRangeThatIntersectsTheStart = allRanges.Find(l =>
-                    l.Start <= segment.FirstXCoordinate && l.End >= segment.FirstXCoordinate);
-                if (existingRangeThatIntersectsTheStart.End <= segment.LastXCoordinate)
-                {
-                    existingRangeThatIntersectsTheStart.End = segment.LastXCoordinate;
-                }
-
-                var existingRangeThatIntersectsTheEnd = allRanges.Find(l =>
-                    l.Start <= segment.LastXCoordinate && l.End >= segment.LastXCoordinate);
-                if (existingRangeThatIntersectsTheEnd.Start >= segment.FirstXCoordinate)
-                {
-                    existingRangeThatIntersectsTheEnd.Start = segment.FirstXCoordinate;
-                }
-
-                return allRanges;
-            });
-        });
-        // _coordinateLookup = allSensedRowSegments.ToDictionary(c => c.FirstCoordinate, c => c.LastCoordinate);
-    }
-
-    public Coordinate GetNextFreeCoordinateInRow(Coordinate coordinate)
-    {
-        if (_coordinateLookup.ContainsKey(coordinate))
-        {
-            var lastSensedCoordinate = _coordinateLookup[coordinate];
-            return lastSensedCoordinate with { X = lastSensedCoordinate.X + 1 };
-        }
-
-        throw new NotImplementedException("");
-    }
-}
-
-public record PairsOfCoordinatesOnTheSameRow(int Y, int FirstXCoordinate, int LastXCoordinate);
 
 public static class ManhattanDistance
 {
