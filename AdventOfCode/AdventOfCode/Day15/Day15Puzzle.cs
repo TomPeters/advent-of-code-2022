@@ -1,3 +1,5 @@
+using System.Diagnostics.Metrics;
+
 namespace AdventOfCode.Day15;
 
 public class Day15Puzzle
@@ -15,13 +17,25 @@ public class Day15Puzzle
 
         var betweenASensorAndABeacon = possibleCoordinatesToConsider.Where(coordinate =>
         {
-            var cantBeABeacon = allMeasurements.Measurements.Any(m => m.IsCoordinateBetweenSensorAndBeacon(coordinate));
+            var cantBeABeacon = allMeasurements.Measurements.Any(m => m.IsInSensedRegion(coordinate));
             return cantBeABeacon;
         });
 
         var allCoordinatesThatCantBeABeacon = betweenASensorAndABeacon.Except(allMeasurements.Measurements.Select(m => m.Beacon.Coordinate));
 
         return allCoordinatesThatCantBeABeacon.Count();
+    }
+
+    public static long GetTuningFrequencyOfSingleUndetectedCoordinateInRange(AllMeasurements allMeasurements, int minCoordinateValue,
+        int maxCoordinateValue)
+    {
+        checked
+        {
+            var coordinate =
+                allMeasurements.GetSingleCoordinateInRangeOutsideOfSensedRegions(minCoordinateValue,
+                    maxCoordinateValue);
+            return coordinate.X * 4000000L + coordinate.Y;
+        }
     }
 
     // Assume start x and start Y are outside the range of any sensors
@@ -38,7 +52,24 @@ public class Day15Puzzle
     }
 }
 
-public record AllMeasurements(Measurement[] Measurements);
+public record AllMeasurements(Measurement[] Measurements)
+{
+    public Coordinate GetSingleCoordinateInRangeOutsideOfSensedRegions(int minCoordinateValue, int maxCoordinateValue)
+    {
+        var candidateCoordinatesInRange = Measurements.SelectMany(m => m.GetSurroundingCoordinatesOfSensedRegion())
+            .Distinct()
+            .Where(c => c.X >= minCoordinateValue)
+            .Where(c => c.Y >= minCoordinateValue)
+            .Where(c => c.X <= maxCoordinateValue)
+            .Where(c => c.Y <= maxCoordinateValue).ToArray();
+        var coordinatesNotSensedByAnySensor = candidateCoordinatesInRange
+            .Where(c =>
+        {
+            return !Measurements.Any(m => m.IsInSensedRegion(c));
+        });
+        return coordinatesNotSensedByAnySensor.Single();
+    }
+}
 
 public class Measurement
 {
@@ -60,7 +91,7 @@ public class Measurement
         return surroundingCoordinates.Where(c => Sensor.Coordinate.GetManhattanDistanceTo(c) <= distanceToBeacon);
     }
 
-    public bool IsCoordinateBetweenSensorAndBeacon(Coordinate coordinate)
+    public bool IsInSensedRegion(Coordinate coordinate)
     {
         return coordinate.GetManhattanDistanceTo(Sensor.Coordinate) <=
                Beacon.Coordinate.GetManhattanDistanceTo(Sensor.Coordinate);

@@ -19,6 +19,20 @@ public class Day15Tests
         var input = ParseInput(FileHelper.ReadFromFile("Day15", "RealData.txt"));
         Assert.Equal(5508234, Day15Puzzle.GetNumberOfPositionsThatCannotContainABeacon(input, 2000000));
     }
+    
+    [Fact]
+    public void Part2_WorksForSampleData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day15", "Sample.txt"));
+        Assert.Equal(56000011, Day15Puzzle.GetTuningFrequencyOfSingleUndetectedCoordinateInRange(input, 0, 20));
+    }
+    
+    [Fact]
+    public void Part2_WorksForRealData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day15", "RealData.txt"));
+        Assert.Equal(10457634860779, Day15Puzzle.GetTuningFrequencyOfSingleUndetectedCoordinateInRange(input, 0, 4000000));
+    }
 
     private AllMeasurements ParseInput(string input)
     {
