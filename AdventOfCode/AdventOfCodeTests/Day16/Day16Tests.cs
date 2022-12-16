@@ -13,6 +13,13 @@ public class Day16Tests
         var input = ParseInput(FileHelper.ReadFromFile("Day16", "Sample.txt"));
         Assert.Equal(1651, Day16Puzzle.GetTheMostPressureThatCanBeReleased(input));
     }
+    
+    [Fact]
+    public void Part1_WorksForRealData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day16", "RealData.txt"));
+        Assert.Equal(1651, Day16Puzzle.GetTheMostPressureThatCanBeReleased(input));
+    }
 
     private ScannedOutput ParseInput(string input)
     {

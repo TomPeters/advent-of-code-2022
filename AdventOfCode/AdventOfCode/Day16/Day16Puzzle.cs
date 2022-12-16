@@ -12,38 +12,44 @@ public class Day16Puzzle
 
 public class CandidateSequence
 {
-    private readonly Room[] _allRooms;
+    private readonly AllRooms _allRooms;
     private readonly int _totalTimeToComplete;
+    private readonly HashSet<string> _openedValves;
+    private readonly HashSet<Room> _roomsVisitedSinceLastValveOpened;
     public Room LastRoom { get; }
     private readonly IOperation[] _operations;
 
-    public CandidateSequence(Room[] allRooms, int totalTimeToComplete, Room lastRoom, IEnumerable<IOperation> operations)
+    public CandidateSequence(AllRooms allRooms, int totalTimeToComplete, Room lastRoom, IEnumerable<IOperation> operations, HashSet<string> openedValves, HashSet<Room> roomsVisitedSinceLastValveOpened)
     {
         _allRooms = allRooms;
         _totalTimeToComplete = totalTimeToComplete;
+        _openedValves = openedValves;
+        _roomsVisitedSinceLastValveOpened = roomsVisitedSinceLastValveOpened;
         LastRoom = lastRoom;
         _operations = operations.ToArray();
     }
 
     public CandidateSequence AddOperation(IOperation newOperation)
     {
-        if (newOperation is MoveToRoomOperation moveToRoomOperation)
-        {
-            return new CandidateSequence(_allRooms, _totalTimeToComplete,  moveToRoomOperation.NewRoom, _operations.Concat(new [] { newOperation }));
-        }
-        return new CandidateSequence(_allRooms, _totalTimeToComplete, LastRoom, _operations.Concat(new [] { newOperation }));
+        var operations = _operations.Concat(new[] { newOperation });
+        var newRoom = newOperation.GetNewRoom();
+        var nextRoom = newRoom ?? LastRoom;
+        var openedValve = newOperation.GetValveOpened();
+        var openedValves = openedValve == null
+            ? _openedValves
+            : new HashSet<string>(_openedValves.Concat(new[] { openedValve }));
+        HashSet<Room> roomsSinceLastOpenValveOperation = openedValve != null ? new HashSet<Room>() :
+            newRoom == null ? _roomsVisitedSinceLastValveOpened : new HashSet<Room>(_roomsVisitedSinceLastValveOpened.Concat(new [] { newRoom }));
+        return new CandidateSequence(_allRooms, _totalTimeToComplete, nextRoom, operations, openedValves, roomsSinceLastOpenValveOperation);
     }
 
     public int GetTotalPressureReleased() => _operations.Sum(o => o.GetPressureReleased());
 
-    public bool CanOpenValve(string valveName) =>
-        _operations.Where(o => o is TurnOnValveInRoomOperation)
-            .Cast<TurnOnValveInRoomOperation>()
-            .All(o => o.Room.Valve.Name != valveName);
-    
+    public bool CanOpenValve(string valveName) => !_openedValves.Contains(valveName);
+
     public bool AnyValvesLeftToOpen()
     {
-        return _allRooms.Where(r => r.Valve.HasAnyPressure()).Any(r => CanOpenValve(r.Valve.Name));
+        return _allRooms.GetValvesThatHaveAnyPressure().Any(CanOpenValve);
     }
 
     public bool CompleteSequenceIsValid()
@@ -68,8 +74,7 @@ public class CandidateSequence
         else
         {
             // Only bother moving if there are any valves left to open. This is an optimisation to reduce the solution space.
-            var roomsVisitedSinceLastValveOpened = _operations.Reverse().TakeWhile(o => o is MoveToRoomOperation moveToRoomOperation).Cast<MoveToRoomOperation>().Select(o => o.NewRoom).ToHashSet();
-            foreach (var connectedRoom in currentRoom.GetConnectedRooms().Where(r => !roomsVisitedSinceLastValveOpened.Contains(r)))
+            foreach (var connectedRoom in currentRoom.GetConnectedRooms().Where(r => !_roomsVisitedSinceLastValveOpened.Contains(r)))
             {
                 yield return new MoveToRoomOperation(connectedRoom);
             }
@@ -80,6 +85,8 @@ public class CandidateSequence
 public interface IOperation
 {
     int GetPressureReleased();
+    Room? GetNewRoom();
+    string? GetValveOpened();
 }
 
 public class MoveToRoomOperation : IOperation
@@ -92,6 +99,12 @@ public class MoveToRoomOperation : IOperation
     }
 
     public int GetPressureReleased() => 0;
+    public Room? GetNewRoom()
+    {
+        return NewRoom;
+    }
+
+    public string? GetValveOpened() => null;
 }
 
 public class TurnOnValveInRoomOperation : IOperation
@@ -106,28 +119,50 @@ public class TurnOnValveInRoomOperation : IOperation
     }
 
     public int GetPressureReleased() => _timeAvailableForValveToReleasePressure * Room.Valve.FlowRate;
+    public Room? GetNewRoom() => null;
+
+    public string? GetValveOpened() => Room.Valve.Name;
 }
 
 public class DoNothingOperation : IOperation
 {
     public int GetPressureReleased() => 0;
+    public Room? GetNewRoom() => null;
+
+    public string? GetValveOpened() => null;
+}
+
+public class AllRooms
+{
+    private readonly string[] _valvesWithAnyPressure;
+    private readonly Dictionary<string, Room> _roomsByValveName;
+
+    public AllRooms(IEnumerable<Room> rooms)
+    {
+        var roomsArray = rooms.ToArray();
+        _valvesWithAnyPressure = roomsArray.Where(r => r.Valve.HasAnyPressure()).Select(r => r.Valve.Name).ToArray();
+        _roomsByValveName = roomsArray.ToDictionary(r => r.Valve.Name);
+    }
+
+    public string[] GetValvesThatHaveAnyPressure() => _valvesWithAnyPressure;
+
+    public Room GetRoomByValveName(string valveName) => _roomsByValveName[valveName];
 }
 
 public class Network
 {
     private readonly Room _startingRoom;
-    private static Room[] _allRooms;
+    private static AllRooms _allRooms;
 
     public static Network CreateNetwork(ScannedOutput scannedOutput)
     {
-        _allRooms = scannedOutput.ScannedRooms.Select(r => new Room(new Valve(r.Valve, r.FlowRate))).ToArray();
-        var allRoomsLookup = _allRooms.ToDictionary(r => r.Valve.Name);
-        var startingRoom = allRoomsLookup["AA"];
+        _allRooms = new AllRooms(scannedOutput.ScannedRooms.Select(r => new Room(new Valve(r.Valve, r.FlowRate))));
+        var startingRoom = _allRooms.GetRoomByValveName("AA");
         scannedOutput.ScannedRooms.ForEach(sr =>
         {
             sr.ConnectedValves.ForEach(roomName =>
             {
-                Room.Connect(allRoomsLookup[sr.Valve], allRoomsLookup[roomName]);
+                Room.Connect(_allRooms.GetRoomByValveName(sr.Valve), _allRooms.GetRoomByValveName(roomName));
             });
         });
         return new Network(startingRoom);
@@ -141,7 +176,7 @@ public class Network
     public IEnumerable<CandidateSequence> GetAllCandidateSequences(int timeToComplete)
     {
         return GetAllCandidateSequences(timeToComplete,
-            new CandidateSequence(_allRooms, timeToComplete, _startingRoom, Array.Empty<IOperation>()));
+            new CandidateSequence(_allRooms, timeToComplete, _startingRoom, Array.Empty<IOperation>(), new HashSet<string>(), new HashSet<Room>()));
     }
 
     IEnumerable<CandidateSequence> GetAllCandidateSequences(int timeRemaining, CandidateSequence sequenceSoFar)
