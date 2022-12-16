@@ -29,9 +29,9 @@ public class CandidateSequence
     {
         if (newOperation is MoveToRoomOperation moveToRoomOperation)
         {
-            return new CandidateSequence(_allRooms, moveToRoomOperation.NewRoom, _operations.Concat(new [] { newOperation }));
+            return new CandidateSequence(_allRooms, _totalTimeToComplete,  moveToRoomOperation.NewRoom, _operations.Concat(new [] { newOperation }));
         }
-        return new CandidateSequence(_allRooms, LastRoom, _operations.Concat(new [] { newOperation }));
+        return new CandidateSequence(_allRooms, _totalTimeToComplete, LastRoom, _operations.Concat(new [] { newOperation }));
     }
 
     public int GetTotalPressureReleased() => _operations.Sum(o => o.GetPressureReleased());
@@ -51,13 +51,7 @@ public class CandidateSequence
         return _operations.Length == _totalTimeToComplete;
     }
 
-    public bool PartialSequenceIsValid()
-    {
-        // If we are just moving around rooms
-        var movingAroundRoomsWithoutOpeningValves = !_operations.TakeLast(_allRooms.Length).All(o => o is MoveToRoomOperation);
-    }
-    
-    IEnumerable<IOperation> GetPossibleNextOperations(int timeRemaining)
+    public IEnumerable<IOperation> GetPossibleNextOperations(int timeRemaining)
     {
         var currentRoom = LastRoom;
         var currentValveHasPressure = currentRoom.Valve.HasAnyPressure();
@@ -73,13 +67,14 @@ public class CandidateSequence
         }
         else
         {
-            // TODO: Only allow moving to rooms we haven't visited since the last valve that was open
             // Only bother moving if there are any valves left to open. This is an optimisation to reduce the solution space.
-            foreach (var connectedRoom in currentRoom.GetConnectedRooms())
+            var roomsVisitedSinceLastValveOpened = _operations.Reverse().TakeWhile(o => o is MoveToRoomOperation moveToRoomOperation).Cast<MoveToRoomOperation>().Select(o => o.NewRoom).ToHashSet();
+            foreach (var connectedRoom in currentRoom.GetConnectedRooms().Where(r => !roomsVisitedSinceLastValveOpened.Contains(r)))
             {
                 yield return new MoveToRoomOperation(connectedRoom);
-            }    
+            }
         }
+    }
 }
 
 public interface IOperation
@@ -146,7 +141,7 @@ public class Network
     public IEnumerable<CandidateSequence> GetAllCandidateSequences(int timeToComplete)
     {
         return GetAllCandidateSequences(timeToComplete,
-            new CandidateSequence(_allRooms, _startingRoom, Array.Empty<IOperation>()));
+            new CandidateSequence(_allRooms, timeToComplete, _startingRoom, Array.Empty<IOperation>()));
     }
 
     IEnumerable<CandidateSequence> GetAllCandidateSequences(int timeRemaining, CandidateSequence sequenceSoFar)
@@ -156,7 +151,7 @@ public class Network
             yield return sequenceSoFar;
             yield break;
         }
-        var possibleOperations = GetPossibleOperations(timeRemaining, sequenceSoFar);
+        var possibleOperations = sequenceSoFar.GetPossibleNextOperations(timeRemaining);
         foreach (var possibleOperation in possibleOperations)
         {
             var sequenceWithNextStep = sequenceSoFar.AddOperation(possibleOperation);
@@ -165,35 +160,6 @@ public class Network
             {
                 yield return nextSequence;
             }
-        }
-    }
-
-    bool ShouldRejectSequenc(CandidateSequence candidateSequence)
-    {
-        if (candidateSequence.)
-    }
-
-    IEnumerable<IOperation> GetPossibleOperations(int timeRemaining, CandidateSequence sequenceSoFar)
-    {
-        var currentRoom = sequenceSoFar.LastRoom;
-        var currentValveHasPressure = currentRoom.Valve.HasAnyPressure();
-        var canTurnValveOn = currentValveHasPressure && sequenceSoFar.CanOpenValve(currentRoom.Valve.Name);
-        if (canTurnValveOn)
-        {
-            yield return new TurnOnValveInRoomOperation(currentRoom, timeRemaining - 1);
-        }
-
-        if (!sequenceSoFar.AnyValvesLeftToOpen())
-        {
-            yield return new DoNothingOperation();
-        }
-        else
-        {
-            // Only bother moving if there are any valves left to open. This is an optimisation to reduce the solution space.
-            foreach (var connectedRoom in currentRoom.GetConnectedRooms())
-            {
-                yield return new MoveToRoomOperation(connectedRoom);
-            }    
         }
     }
 }
