@@ -5,7 +5,7 @@ public class Day16Puzzle
     public static int GetTheMostPressureThatCanBeReleased(ScannedOutput scannedOutput)
     {
         var network = Network.CreateNetwork(scannedOutput);
-        var allCandidateSequences = network.GetAllCandidateSequences(30);
+        var allCandidateSequences = network.GetAllCandidateSequences(30).Where(s => s.CompleteSequenceIsValid());
         return allCandidateSequences.Max(s => s.GetTotalPressureReleased());
     }
 }
@@ -13,12 +13,14 @@ public class Day16Puzzle
 public class CandidateSequence
 {
     private readonly Room[] _allRooms;
+    private readonly int _totalTimeToComplete;
     public Room LastRoom { get; }
     private readonly IOperation[] _operations;
 
-    public CandidateSequence(Room[] allRooms, Room lastRoom, IEnumerable<IOperation> operations)
+    public CandidateSequence(Room[] allRooms, int totalTimeToComplete, Room lastRoom, IEnumerable<IOperation> operations)
     {
         _allRooms = allRooms;
+        _totalTimeToComplete = totalTimeToComplete;
         LastRoom = lastRoom;
         _operations = operations.ToArray();
     }
@@ -43,6 +45,41 @@ public class CandidateSequence
     {
         return _allRooms.Where(r => r.Valve.HasAnyPressure()).Any(r => CanOpenValve(r.Valve.Name));
     }
+
+    public bool CompleteSequenceIsValid()
+    {
+        return _operations.Length == _totalTimeToComplete;
+    }
+
+    public bool PartialSequenceIsValid()
+    {
+        // If we are just moving around rooms
+        var movingAroundRoomsWithoutOpeningValves = !_operations.TakeLast(_allRooms.Length).All(o => o is MoveToRoomOperation);
+    }
+    
+    IEnumerable<IOperation> GetPossibleNextOperations(int timeRemaining)
+    {
+        var currentRoom = LastRoom;
+        var currentValveHasPressure = currentRoom.Valve.HasAnyPressure();
+        var canTurnValveOn = currentValveHasPressure && CanOpenValve(currentRoom.Valve.Name);
+        if (canTurnValveOn)
+        {
+            yield return new TurnOnValveInRoomOperation(currentRoom, timeRemaining - 1);
+        }
+
+        if (!AnyValvesLeftToOpen())
+        {
+            yield return new DoNothingOperation();
+        }
+        else
+        {
+            // TODO: Only allow moving to rooms we haven't visited since the last valve that was open
+            // Only bother moving if there are any valves left to open. This is an optimisation to reduce the solution space.
+            foreach (var connectedRoom in currentRoom.GetConnectedRooms())
+            {
+                yield return new MoveToRoomOperation(connectedRoom);
+            }    
+        }
 }
 
 public interface IOperation
@@ -114,6 +151,11 @@ public class Network
 
     IEnumerable<CandidateSequence> GetAllCandidateSequences(int timeRemaining, CandidateSequence sequenceSoFar)
     {
+        if (timeRemaining == 0)
+        {
+            yield return sequenceSoFar;
+            yield break;
+        }
         var possibleOperations = GetPossibleOperations(timeRemaining, sequenceSoFar);
         foreach (var possibleOperation in possibleOperations)
         {
@@ -124,6 +166,11 @@ public class Network
                 yield return nextSequence;
             }
         }
+    }
+
+    bool ShouldRejectSequenc(CandidateSequence candidateSequence)
+    {
+        if (candidateSequence.)
     }
 
     IEnumerable<IOperation> GetPossibleOperations(int timeRemaining, CandidateSequence sequenceSoFar)
