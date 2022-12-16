@@ -48,10 +48,10 @@ public class Measurement
     {
         this.Sensor = sensor;
         this.Beacon = beacon;
-        _knownRegionWhereThereCantBeAnyMoreBeacons = GetKnownRegionWhereThereCantBeAnyMoreBeacons();
+        // _knownRegionWhereThereCantBeAnyMoreBeacons = GetSurroundingCoordinatesOfSensedRegion();
     }
 
-    public IEnumerable<Coordinate> GetCoordinatesWhereThereCantBeABeacon()
+    public IEnumerable<Coordinate> GetAllSensedCoordinates()
     {
         var distanceToBeacon = Sensor.Coordinate.GetManhattanDistanceTo(Beacon.Coordinate);
         var xRange = Enumerable.Range(Sensor.Coordinate.X - distanceToBeacon, distanceToBeacon * 2 + 1);
@@ -69,13 +69,14 @@ public class Measurement
     public Sensor Sensor { get; }
     public Beacon Beacon { get; }
     
-    IEnumerable<PairsOfCoordinatesOnTheSameRow> GetKnownRegionWhereThereCantBeAnyMoreBeacons()
+    public IEnumerable<Coordinate> GetSurroundingCoordinatesOfSensedRegion()
     {
         var distanceToBeacon = Sensor.Coordinate.GetManhattanDistanceTo(Beacon.Coordinate);
-        var start = Sensor.Coordinate with { Y = Sensor.Coordinate.Y - distanceToBeacon };
-        var coordinatesAlongRightEdge = CoordinatesAlongRightEdgeOfSensedRegion(start, distanceToBeacon);
-        var coordinatesAlongLeftEdge = CoordinatesAlongLeftEdgeOfSensedRegion(start, distanceToBeacon);
-        return coordinatesAlongRightEdge.Zip(coordinatesAlongLeftEdge, (c1, c2) => new PairsOfCoordinatesOnTheSameRow(c1.Y, c1.X, c2.X));
+        var distanceToSurroundingPoints = distanceToBeacon + 1;
+        var start = Sensor.Coordinate with { Y = Sensor.Coordinate.Y - distanceToSurroundingPoints };
+        var coordinatesAlongRightEdge = CoordinatesAlongRightEdgeOfSensedRegion(start, distanceToSurroundingPoints).ToArray();
+        var coordinatesAlongLeftEdge = CoordinatesAlongLeftEdgeOfSensedRegion(start, distanceToSurroundingPoints).ToArray();
+        return coordinatesAlongLeftEdge.Union(coordinatesAlongRightEdge);
     }
     
     IEnumerable<Coordinate> CoordinatesAlongRightEdgeOfSensedRegion(Coordinate topCoordinateOfRegion, int radiusOfRegion)
@@ -92,7 +93,7 @@ public class Measurement
     {
         return Enumerable.Range(topCoordinateOfRegion.Y, radiusOfRegion * 2 + 1).Select((y, i) =>
         {
-            if (y < radiusOfRegion + 1)
+            if (i < radiusOfRegion + 1)
             {
                 var offset = getXOffsetFromCentreLie(i);
                 var x = topCoordinateOfRegion.X + offset;
