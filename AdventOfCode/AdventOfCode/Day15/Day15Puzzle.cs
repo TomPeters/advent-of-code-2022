@@ -24,14 +24,17 @@ public class Day15Puzzle
         return allCoordinatesThatCantBeABeacon.Count();
     }
 
-    // Assume start x and start Y are outside the range of any sensers
-    static IEnumerable<Coordinate> GetCoordinatesWithinRangeOfSensor(int startX, int endX, int row)
+    // Assume start x and start Y are outside the range of any sensors
+    static IEnumerable<Coordinate> GetCoordinatesWithinRangeOfSensor(int startX, int endX, int y, AllSensedRowSegments allSensedRowSegments)
     {
         var currentX = startX;
         while (currentX <= endX)
         {
-            if ()
+            var currentCoord = new Coordinate(currentX, y);
+            // if (allSensedRowSegments)
         }
+
+        throw new NotImplementedException("");
     }
 }
 
@@ -72,7 +75,7 @@ public class Measurement
         var start = Sensor.Coordinate with { Y = Sensor.Coordinate.Y - distanceToBeacon };
         var coordinatesAlongRightEdge = CoordinatesAlongRightEdgeOfSensedRegion(start, distanceToBeacon);
         var coordinatesAlongLeftEdge = CoordinatesAlongLeftEdgeOfSensedRegion(start, distanceToBeacon);
-        return coordinatesAlongRightEdge.Zip(coordinatesAlongLeftEdge, (c1, c2) => new PairsOfCoordinatesOnTheSameRow(c1, c2));
+        return coordinatesAlongRightEdge.Zip(coordinatesAlongLeftEdge, (c1, c2) => new PairsOfCoordinatesOnTheSameRow(c1.Y, c1.X, c2.X));
     }
     
     IEnumerable<Coordinate> CoordinatesAlongRightEdgeOfSensedRegion(Coordinate topCoordinateOfRegion, int radiusOfRegion)
@@ -105,17 +108,61 @@ public class Measurement
     }
 }
 
-public class AllPairsOfCoordinates
+public class XRange
+{
+    public XRange(int Start, int End)
+    {
+        this.Start = Start;
+        this.End = End;
+    }
+
+    public int Start { get; set; }
+    public int End { get; set; }
+}
+
+public class AllSensedRowSegments
 {
     private Dictionary<Coordinate, Coordinate> _coordinateLookup;
 
-    public AllPairsOfCoordinates(IEnumerable<PairsOfCoordinatesOnTheSameRow> allCoordinatePairs)
+    public AllSensedRowSegments(IEnumerable<PairsOfCoordinatesOnTheSameRow> allSensedRowSegments)
     {
-        _coordinateLookup = allCoordinatePairs.ToDictionary(c => c.FirstCoordinate, c => c.LastCoordinate);
+        allSensedRowSegments.GroupBy(s => s.Y).Select(row =>
+        {
+            return row.Aggregate(new List<XRange>(), (allRanges, segment) =>
+            {
+                var existingRangeThatIntersectsTheStart = allRanges.Find(l =>
+                    l.Start <= segment.FirstXCoordinate && l.End >= segment.FirstXCoordinate);
+                if (existingRangeThatIntersectsTheStart.End <= segment.LastXCoordinate)
+                {
+                    existingRangeThatIntersectsTheStart.End = segment.LastXCoordinate;
+                }
+
+                var existingRangeThatIntersectsTheEnd = allRanges.Find(l =>
+                    l.Start <= segment.LastXCoordinate && l.End >= segment.LastXCoordinate);
+                if (existingRangeThatIntersectsTheEnd.Start >= segment.FirstXCoordinate)
+                {
+                    existingRangeThatIntersectsTheEnd.Start = segment.FirstXCoordinate;
+                }
+
+                return allRanges;
+            });
+        });
+        // _coordinateLookup = allSensedRowSegments.ToDictionary(c => c.FirstCoordinate, c => c.LastCoordinate);
+    }
+
+    public Coordinate GetNextFreeCoordinateInRow(Coordinate coordinate)
+    {
+        if (_coordinateLookup.ContainsKey(coordinate))
+        {
+            var lastSensedCoordinate = _coordinateLookup[coordinate];
+            return lastSensedCoordinate with { X = lastSensedCoordinate.X + 1 };
+        }
+
+        throw new NotImplementedException("");
     }
 }
 
-public record PairsOfCoordinatesOnTheSameRow(Coordinate FirstCoordinate, Coordinate LastCoordinate);
+public record PairsOfCoordinatesOnTheSameRow(int Y, int FirstXCoordinate, int LastXCoordinate);
 
 public static class ManhattanDistance
 {
