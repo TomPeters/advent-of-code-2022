@@ -4,7 +4,7 @@ public class Day16Puzzle
 {
     public static int GetTheMostPressureThatCanBeReleased(ScannedOutput scannedOutput)
     {
-        var network = Network.CreateNetwork(scannedOutput);
+        var network = CompleteNetwork.CreateNetwork(scannedOutput);
         var allCandidateSequences = network.GetAllCandidateSequences(30).Where(s => s.CompleteSequenceIsValid());
         return allCandidateSequences.Max(s => s.GetTotalPressureReleased());
     }
@@ -149,27 +149,28 @@ public class AllRooms
     public Room GetRoomByValveName(string valveName) => _roomsByValveName[valveName];
 }
 
-public class Network
+public class CompleteNetwork
 {
     private readonly Room _startingRoom;
-    private static AllRooms _allRooms;
+    private AllRooms _allRooms;
 
-    public static Network CreateNetwork(ScannedOutput scannedOutput)
+    public static CompleteNetwork CreateNetwork(ScannedOutput scannedOutput)
     {
-        _allRooms = new AllRooms(scannedOutput.ScannedRooms.Select(r => new Room(new Valve(r.Valve, r.FlowRate))));
-        var startingRoom = _allRooms.GetRoomByValveName("AA");
+        var allRooms = new AllRooms(scannedOutput.ScannedRooms.Select(r => new Room(new Valve(r.Valve, r.FlowRate))));
+        var startingRoom = allRooms.GetRoomByValveName("AA");
         scannedOutput.ScannedRooms.ForEach(sr =>
         {
             sr.ConnectedValves.ForEach(roomName =>
             {
-                Room.Connect(_allRooms.GetRoomByValveName(sr.Valve), _allRooms.GetRoomByValveName(roomName));
+                Room.Connect(allRooms.GetRoomByValveName(sr.Valve), allRooms.GetRoomByValveName(roomName));
             });
         });
-        return new Network(startingRoom);
+        return new CompleteNetwork(allRooms, startingRoom);
     }
 
-    Network(Room startingRoom)
+    CompleteNetwork(AllRooms allRooms, Room startingRoom)
     {
+        _allRooms = allRooms;
         _startingRoom = startingRoom;
     }
 
