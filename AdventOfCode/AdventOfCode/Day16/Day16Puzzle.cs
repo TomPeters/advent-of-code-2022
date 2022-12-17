@@ -128,6 +128,37 @@ public class SimplifiedNetwork
         return shortestPaths;
     }
     
+    public IEnumerable<CandidateSequenceFor2Actors> GetAllCandidateSequencesForTwoConcurrentActors(int timeToComplete)
+    {
+        var startingRoom = _allRooms.Single(r => r.Valve.Name == "AA");
+        
+        // All rooms that have flow rates with zero have already been removed from the network, with the one exception of the starting room
+        // To avoid opening the valve in this starting room, we exclude it from this collection
+        var roomsWithValvesToBeOpened = _allRooms.Except(new [] {startingRoom});
+        return GetAllCandidateSequencesFor2Actors(timeToComplete,
+            new CandidateSequenceFor2Actors(startingRoom, Array.Empty<IOperation>(), new HashSet<Room>(roomsWithValvesToBeOpened)));
+    }
+
+    IEnumerable<CandidateSequenceFor2Actors> GetAllCandidateSequencesFor2Actors(int timeRemaining, CandidateSequenceFor2Actors sequenceSoFar)
+    {
+        var possibleOperations = sequenceSoFar.GetPossibleNextOperations(timeRemaining).Where(o => o.TimeElapsed() <= timeRemaining).ToArray();
+
+        if (timeRemaining == 0 || !possibleOperations.Any())
+        {
+            yield return sequenceSoFar;
+            yield break;
+        }
+        foreach (var operation in possibleOperations)
+        {
+            var sequenceWithNextStep = sequenceSoFar.AddOperation(operation);
+            foreach (var nextSequence
+                     in GetAllCandidateSequencesFor2Actors(timeRemaining - operation.TimeElapsed(), sequenceWithNextStep))
+            {
+                yield return nextSequence;
+            }
+        }
+    }
+
     public IEnumerable<CandidateSequence> GetAllCandidateSequences(int timeToComplete)
     {
         var startingRoom = _allRooms.Single(r => r.Valve.Name == "AA");
@@ -182,6 +213,55 @@ public class CandidateSequence
             ? _roomsWithClosedValves
             : new HashSet<Room>(_roomsWithClosedValves.Except(new[] { roomWithOpenedValve }));
         return new CandidateSequence(nextRoom, operations, roomsWithClosedValves);
+    }
+
+    public int GetTotalPressureReleased() => _operations.Sum(o => o.GetPressureReleased());
+
+    public IEnumerable<IOperation> GetPossibleNextOperations(int timeRemaining)
+    {
+        var currentRoom = LastRoom;
+
+        var lastOperationWasAMove = _operations.LastOrDefault()?.GetNewRoom() != null; // first room => false
+        if (_roomsWithClosedValves.Contains(currentRoom))
+        {
+            yield return new TurnOnValveInRoomOperation(currentRoom, timeRemaining - 1);
+        }
+
+        // Because the network is completely connected, we never want to perform two moves in a row
+        if (!lastOperationWasAMove)
+        {
+            var otherRoomsWithClosedValves = _roomsWithClosedValves.Except(new[] { currentRoom })
+                .Select(r => new MoveToRoomOperation(currentRoom, r));
+            foreach (var moveToRoomOperation in otherRoomsWithClosedValves)
+            {
+                yield return moveToRoomOperation;
+            }
+        }
+    }
+}
+
+public class CandidateSequenceFor2Actors
+{
+    private readonly HashSet<Room> _roomsWithClosedValves;
+    public Room LastRoom { get; }
+    private readonly IOperation[] _operations;
+
+    public CandidateSequenceFor2Actors(Room lastRoom, IEnumerable<IOperation> operations, HashSet<Room> roomsWithClosedValves)
+    {
+        _roomsWithClosedValves = roomsWithClosedValves;
+        LastRoom = lastRoom;
+        _operations = operations.ToArray();
+    }
+
+    public CandidateSequenceFor2Actors AddOperation(IOperation newOperation)
+    {
+        var operations = _operations.Concat(new[] { newOperation });
+        var nextRoom = newOperation.GetNewRoom() ?? LastRoom;
+        var roomWithOpenedValve = newOperation.GetRoomWithValveOpened();
+        var roomsWithClosedValves = roomWithOpenedValve == null
+            ? _roomsWithClosedValves
+            : new HashSet<Room>(_roomsWithClosedValves.Except(new[] { roomWithOpenedValve }));
+        return new CandidateSequenceFor2Actors(nextRoom, operations, roomsWithClosedValves);
     }
 
     public int GetTotalPressureReleased() => _operations.Sum(o => o.GetPressureReleased());
