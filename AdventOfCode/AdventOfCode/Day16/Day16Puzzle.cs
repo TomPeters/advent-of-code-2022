@@ -2,11 +2,19 @@ namespace AdventOfCode.Day16;
 
 public class Day16Puzzle
 {
-    public static int GetTheMostPressureThatCanBeReleased(ScannedOutput scannedOutput)
+    public static int GetTheMostPressureThatCanBeReleased(ScannedOutput scannedOutput, int timeToComplete)
     {
         var fullNetwork = CompleteNetwork.CreateNetwork(scannedOutput);
         var simplifiedNetwork = SimplifiedNetwork.Create(fullNetwork);
-        var allCandidateSequences = simplifiedNetwork.GetAllCandidateSequences(30);
+        var allCandidateSequences = simplifiedNetwork.GetAllCandidateSequences(timeToComplete);
+        return allCandidateSequences.Max(s => s.GetTotalPressureReleased());
+    }
+    
+    public static int GetTheMostPressureThatCanBeReleasedByTwoActors(ScannedOutput scannedOutput, int timeToComplete)
+    {
+        var fullNetwork = CompleteNetwork.CreateNetwork(scannedOutput);
+        var simplifiedNetwork = SimplifiedNetwork.Create(fullNetwork);
+        var allCandidateSequences = simplifiedNetwork.GetAllCandidateSequences(timeToComplete);
         return allCandidateSequences.Max(s => s.GetTotalPressureReleased());
     }
 }
