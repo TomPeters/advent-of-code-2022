@@ -14,30 +14,43 @@ public class Day16Puzzle
     {
         var fullNetwork = CompleteNetwork.CreateNetwork(scannedOutput);
         var simplifiedNetwork = SimplifiedNetwork.Create(fullNetwork);
-        var allCandidateSequences = simplifiedNetwork.GetAllCandidateSequences(timeToComplete);
-        return allCandidateSequences.Max(s => s.GetTotalPressureReleased());
+        var allCandidateSequences = simplifiedNetwork.GetAllCandidateSequencesForTwoConcurrentActors(timeToComplete);
+        var candidateSequenceFor2Actors = allCandidateSequences.MaxBy(s => s.GetTotalPressureReleased());
+        return candidateSequenceFor2Actors.GetTotalPressureReleased();
     }
+}
+
+public enum Actor
+{
+    Actor1,
+    Actor2
 }
 
 public interface IOperation
 {
+    Actor Actor { get; }
     int GetPressureReleased();
     Room? GetNewRoom();
     Room? GetRoomWithValveOpened();
-    int TimeElapsed();
+    int TimeForActorsNextAction();
+    int TimeRequiredToExecute();
 }
 
 public class MoveToRoomOperation : IOperation
 {
+    private readonly int _startingTime;
     public int TravelTime { get; }
     public Room NewRoom { get; }
 
-    public MoveToRoomOperation(Room originalRoom, Room newRoom)
+    public MoveToRoomOperation(int startingTime, Room originalRoom, Room newRoom, Actor actor)
     {
+        _startingTime = startingTime;
         TravelTime = originalRoom.GetTravelTimeTo(newRoom);
         NewRoom = newRoom;
+        Actor = actor;
     }
 
+    public Actor Actor { get; }
     public int GetPressureReleased() => 0;
     public Room? GetNewRoom()
     {
@@ -45,25 +58,29 @@ public class MoveToRoomOperation : IOperation
     }
 
     public Room? GetRoomWithValveOpened() => null;
-    public int TimeElapsed() => TravelTime;
+    public int TimeForActorsNextAction() => _startingTime - TimeRequiredToExecute();
+    public int TimeRequiredToExecute() => TravelTime;
 }
 
 public class TurnOnValveInRoomOperation : IOperation
 {
     public Room Room { get; }
-    private readonly int _timeAvailableForValveToReleasePressure;
+    private readonly int _startingTime;
 
-    public TurnOnValveInRoomOperation(Room room, int timeAvailableForValveToReleasePressure)
+    public TurnOnValveInRoomOperation(Room room, int startingTime, Actor actor)
     {
         Room = room;
-        _timeAvailableForValveToReleasePressure = timeAvailableForValveToReleasePressure;
+        _startingTime = startingTime;
+        Actor = actor;
     }
 
-    public int GetPressureReleased() => _timeAvailableForValveToReleasePressure * Room.Valve.FlowRate;
+    public Actor Actor { get; }
+    public int GetPressureReleased() => (_startingTime - 1) * Room.Valve.FlowRate;
     public Room? GetNewRoom() => null;
 
     public Room? GetRoomWithValveOpened() => Room;
-    public int TimeElapsed() => 1;
+    public int TimeForActorsNextAction() => _startingTime - TimeRequiredToExecute();
+    public int TimeRequiredToExecute() => 1;
 }
 
 public class SimplifiedNetwork
@@ -141,7 +158,7 @@ public class SimplifiedNetwork
 
     IEnumerable<CandidateSequenceFor2Actors> GetAllCandidateSequencesFor2Actors(int timeRemaining, CandidateSequenceFor2Actors sequenceSoFar)
     {
-        var possibleOperations = sequenceSoFar.GetPossibleNextOperations(timeRemaining).Where(o => o.TimeElapsed() <= timeRemaining).ToArray();
+        var possibleOperations = sequenceSoFar.GetPossibleNextOperations(timeRemaining).Where(o => o.TimeRequiredToExecute() <= timeRemaining).ToArray();
 
         if (timeRemaining == 0 || !possibleOperations.Any())
         {
@@ -152,7 +169,7 @@ public class SimplifiedNetwork
         {
             var sequenceWithNextStep = sequenceSoFar.AddOperation(operation);
             foreach (var nextSequence
-                     in GetAllCandidateSequencesFor2Actors(timeRemaining - operation.TimeElapsed(), sequenceWithNextStep))
+                     in GetAllCandidateSequencesFor2Actors(sequenceSoFar.GetTimeForNextActor() ?? timeRemaining, sequenceWithNextStep))
             {
                 yield return nextSequence;
             }
@@ -172,7 +189,7 @@ public class SimplifiedNetwork
 
     IEnumerable<CandidateSequence> GetAllCandidateSequences(int timeRemaining, CandidateSequence sequenceSoFar)
     {
-        var possibleOperations = sequenceSoFar.GetPossibleNextOperations(timeRemaining).Where(o => o.TimeElapsed() <= timeRemaining).ToArray();
+        var possibleOperations = sequenceSoFar.GetPossibleNextOperations(timeRemaining).Where(o => o.TimeForActorsNextAction() <= timeRemaining).ToArray();
 
         if (timeRemaining == 0 || !possibleOperations.Any())
         {
@@ -183,7 +200,7 @@ public class SimplifiedNetwork
         {
             var sequenceWithNextStep = sequenceSoFar.AddOperation(operation);
             foreach (var nextSequence
-                     in GetAllCandidateSequences(timeRemaining - operation.TimeElapsed(), sequenceWithNextStep))
+                     in GetAllCandidateSequences(timeRemaining - operation.TimeForActorsNextAction(), sequenceWithNextStep))
             {
                 yield return nextSequence;
             }
@@ -224,14 +241,14 @@ public class CandidateSequence
         var lastOperationWasAMove = _operations.LastOrDefault()?.GetNewRoom() != null; // first room => false
         if (_roomsWithClosedValves.Contains(currentRoom))
         {
-            yield return new TurnOnValveInRoomOperation(currentRoom, timeRemaining - 1);
+            yield return new TurnOnValveInRoomOperation(currentRoom, timeRemaining, Actor.Actor1);
         }
 
         // Because the network is completely connected, we never want to perform two moves in a row
         if (!lastOperationWasAMove)
         {
             var otherRoomsWithClosedValves = _roomsWithClosedValves.Except(new[] { currentRoom })
-                .Select(r => new MoveToRoomOperation(currentRoom, r));
+                .Select(r => new MoveToRoomOperation(timeRemaining, currentRoom, r, Actor.Actor1));
             foreach (var moveToRoomOperation in otherRoomsWithClosedValves)
             {
                 yield return moveToRoomOperation;
@@ -242,45 +259,55 @@ public class CandidateSequence
 
 public class CandidateSequenceFor2Actors
 {
+    private readonly Room _startingRoom;
     private readonly HashSet<Room> _roomsWithClosedValves;
-    public Room LastRoom { get; }
     private readonly IOperation[] _operations;
 
-    public CandidateSequenceFor2Actors(Room lastRoom, IEnumerable<IOperation> operations, HashSet<Room> roomsWithClosedValves)
+    public CandidateSequenceFor2Actors(Room startingRoom, IEnumerable<IOperation> operations, HashSet<Room> roomsWithClosedValves)
     {
+        _startingRoom = startingRoom;
         _roomsWithClosedValves = roomsWithClosedValves;
-        LastRoom = lastRoom;
         _operations = operations.ToArray();
     }
 
     public CandidateSequenceFor2Actors AddOperation(IOperation newOperation)
     {
         var operations = _operations.Concat(new[] { newOperation });
-        var nextRoom = newOperation.GetNewRoom() ?? LastRoom;
         var roomWithOpenedValve = newOperation.GetRoomWithValveOpened();
         var roomsWithClosedValves = roomWithOpenedValve == null
             ? _roomsWithClosedValves
             : new HashSet<Room>(_roomsWithClosedValves.Except(new[] { roomWithOpenedValve }));
-        return new CandidateSequenceFor2Actors(nextRoom, operations, roomsWithClosedValves);
+        return new CandidateSequenceFor2Actors(_startingRoom, operations, roomsWithClosedValves);
+    }
+
+    public int? GetTimeForNextActor()
+    {
+        return new[] { Actor.Actor1, Actor.Actor2 }.Select(a => _operations.LastOrDefault(o => o.Actor == a)?.TimeForActorsNextAction()).Max();
     }
 
     public int GetTotalPressureReleased() => _operations.Sum(o => o.GetPressureReleased());
 
     public IEnumerable<IOperation> GetPossibleNextOperations(int timeRemaining)
     {
-        var currentRoom = LastRoom;
+        var currentActor = !_operations.Any() ? Actor.Actor1 :
+            new[] { Actor.Actor1, Actor.Actor2 }.Select(a => (a, _operations.LastOrDefault(o => o.Actor == a)?.TimeForActorsNextAction() ?? timeRemaining)).MaxBy(t => t.Item2).a;
 
-        var lastOperationWasAMove = _operations.LastOrDefault()?.GetNewRoom() != null; // first room => false
-        if (_roomsWithClosedValves.Contains(currentRoom))
+        var operationsForCurrentActors = _operations.Where(o => o.Actor == currentActor).ToArray();
+        
+        var actorsCurrentRoom = operationsForCurrentActors.Select(r => r.GetNewRoom()).LastOrDefault(r => r != null) ??
+                                _startingRoom;
+        
+        var lastOperationWasAMove = operationsForCurrentActors.LastOrDefault()?.GetNewRoom() != null; // first room => false
+        if (_roomsWithClosedValves.Contains(actorsCurrentRoom))
         {
-            yield return new TurnOnValveInRoomOperation(currentRoom, timeRemaining - 1);
+            yield return new TurnOnValveInRoomOperation(actorsCurrentRoom, timeRemaining, currentActor);
         }
 
         // Because the network is completely connected, we never want to perform two moves in a row
         if (!lastOperationWasAMove)
         {
-            var otherRoomsWithClosedValves = _roomsWithClosedValves.Except(new[] { currentRoom })
-                .Select(r => new MoveToRoomOperation(currentRoom, r));
+            var otherRoomsWithClosedValves = _roomsWithClosedValves.Except(new[] { actorsCurrentRoom })
+                .Select(r => new MoveToRoomOperation(timeRemaining, actorsCurrentRoom, r, currentActor));
             foreach (var moveToRoomOperation in otherRoomsWithClosedValves)
             {
                 yield return moveToRoomOperation;
