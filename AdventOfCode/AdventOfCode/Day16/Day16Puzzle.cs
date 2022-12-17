@@ -7,8 +7,7 @@ public class Day16Puzzle
         var fullNetwork = CompleteNetwork.CreateNetwork(scannedOutput);
         var simplifiedNetwork = SimplifiedNetwork.Create(fullNetwork);
         var allCandidateSequences = simplifiedNetwork.GetAllCandidateSequences(30);
-        var mostPressureReleasedSequence = allCandidateSequences.MaxBy(s => s.GetTotalPressureReleased());
-        return mostPressureReleasedSequence.GetTotalPressureReleased();
+        return allCandidateSequences.Max(s => s.GetTotalPressureReleased());
     }
 }
 
