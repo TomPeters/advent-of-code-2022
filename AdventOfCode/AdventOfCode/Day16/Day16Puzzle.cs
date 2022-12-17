@@ -7,7 +7,8 @@ public class Day16Puzzle
         var fullNetwork = CompleteNetwork.CreateNetwork(scannedOutput);
         var simplifiedNetwork = SimplifiedNetwork.Create(fullNetwork);
         var allCandidateSequences = simplifiedNetwork.GetAllCandidateSequences(30);
-        return allCandidateSequences.Max(s => s.GetTotalPressureReleased());
+        var mostPressureReleasedSequence = allCandidateSequences.MaxBy(s => s.GetTotalPressureReleased());
+        return mostPressureReleasedSequence.GetTotalPressureReleased();
     }
 }
 
@@ -99,7 +100,7 @@ public class SimplifiedNetwork
     private static IDictionary<OriginalRoom, int> GetShortestPathsToAllRooms(OriginalRoom startingRoom)
     {
         var shortestPaths = new Dictionary<OriginalRoom, int>();
-        var roomsToCheck = new List<OriginalRoom> { startingRoom };
+        var roomsToCheck = new List<OriginalRoom>(startingRoom.GetConnectedRooms());
         var currentTravelTime = 1;
         while (roomsToCheck.Any())
         {
@@ -133,12 +134,13 @@ public class SimplifiedNetwork
 
     IEnumerable<CandidateSequence> GetAllCandidateSequences(int timeRemaining, CandidateSequence sequenceSoFar)
     {
-        if (timeRemaining == 0)
+        var possibleOperations = sequenceSoFar.GetPossibleNextOperations(timeRemaining).Where(o => o.TimeElapsed() <= timeRemaining).ToArray();
+
+        if (timeRemaining == 0 || !possibleOperations.Any())
         {
             yield return sequenceSoFar;
             yield break;
         }
-        var possibleOperations = sequenceSoFar.GetPossibleNextOperations(timeRemaining);
         foreach (var operation in possibleOperations)
         {
             var sequenceWithNextStep = sequenceSoFar.AddOperation(operation);
@@ -181,15 +183,21 @@ public class CandidateSequence
     {
         var currentRoom = LastRoom;
 
+        var lastOperationWasAMove = _operations.LastOrDefault()?.GetNewRoom() != null; // first room => false
         if (_roomsWithClosedValves.Contains(currentRoom))
         {
             yield return new TurnOnValveInRoomOperation(currentRoom, timeRemaining - 1);
         }
 
-        var otherRoomsWithClosedValves = _roomsWithClosedValves.Except(new[] { currentRoom }).Select(r => new MoveToRoomOperation(currentRoom, r));
-        foreach (var moveToRoomOperation in otherRoomsWithClosedValves)
+        // Because the network is completely connected, we never want to perform two moves in a row
+        if (!lastOperationWasAMove)
         {
-            yield return moveToRoomOperation;
+            var otherRoomsWithClosedValves = _roomsWithClosedValves.Except(new[] { currentRoom })
+                .Select(r => new MoveToRoomOperation(currentRoom, r));
+            foreach (var moveToRoomOperation in otherRoomsWithClosedValves)
+            {
+                yield return moveToRoomOperation;
+            }
         }
     }
 }
@@ -208,9 +216,12 @@ public class Room
         Valve = valve;
     }
 
-    public void ConnectToRoom(Room room, int travelTime)
+    void ConnectToRoom(Room room, int travelTime)
     {
-        _connectedRooms.Add(room, travelTime);
+        if (!_connectedRooms.ContainsKey(room))
+        {
+            _connectedRooms.Add(room, travelTime);
+        }
     }
 
     public static void Connect(Room room1, Room room2, int travelTime)
