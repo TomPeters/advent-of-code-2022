@@ -27,6 +27,92 @@ public class Day16Tests
         var input = ParseInput(FileHelper.ReadFromFile("Day16", "Sample.txt"));
         Assert.Equal(1707, Day16Puzzle.GetTheMostPressureThatCanBeReleasedByTwoActors(input, 26));
     }
+    
+    [Fact]
+    public void Part2_WorksForRealData()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day16", "RealData.txt"));
+        Assert.Equal(1707, Day16Puzzle.GetTheMostPressureThatCanBeReleasedByTwoActors(input, 26));
+    }
+
+    [Fact]
+    public void SequenceForIncorrectOutputIsNotIncluded()
+    {
+        var input = ParseInput(FileHelper.ReadFromFile("Day16", "Sample.txt"));
+        var fullNetwork = CompleteNetwork.CreateNetwork(input);
+        var network = SimplifiedNetwork.Create(fullNetwork);
+        var startingRoom = network.GetRoom("AA");
+        var roomsWithClosedValves = new HashSet<Room>(network.RoomsWithValvesToBeOpened);
+
+        var startingSequence =
+            new CandidateSequenceFor2Actors(startingRoom, Enumerable.Empty<IOperation>(), roomsWithClosedValves, 26);
+
+        var first = Actor1MovesToValveDD(startingSequence);
+        var second = Actor2MoveToValveBB(first);
+        var third = Actor1OpensValveDD(second);
+        var fourth = Actor2OpensValveBB(third);
+        var fifth = Actor1MoveToValveHH(fourth);
+
+        CandidateSequenceFor2Actors Actor1MovesToValveDD(CandidateSequenceFor2Actors sequence)
+        {
+            var operation = sequence
+                .GetPossibleNextOperations(26).Where(o => o is MoveToRoomOperation moveToRoomOperation)
+                .Cast<MoveToRoomOperation>().Single(r => r.NewRoom.Valve.Name == "DD");
+
+            Assert.Equal(Actor.Actor1, operation.Actor);
+            Assert.Equal(25, operation.TimeForActorsNextAction());
+
+            return sequence.AddOperation(operation);
+        }
+        
+        CandidateSequenceFor2Actors Actor2MoveToValveBB(CandidateSequenceFor2Actors sequence)
+        {
+            var operation = sequence
+                .GetPossibleNextOperations(26).Where(o => o is MoveToRoomOperation moveToRoomOperation)
+                .Cast<MoveToRoomOperation>().Single(r => r.NewRoom.Valve.Name == "BB");
+        
+            Assert.Equal(Actor.Actor2, operation.Actor);
+            Assert.Equal(25, operation.TimeForActorsNextAction());
+
+            return sequence.AddOperation(operation);
+        }
+        
+        CandidateSequenceFor2Actors Actor1OpensValveDD(CandidateSequenceFor2Actors sequence)
+        {
+            var operation = sequence
+                .GetPossibleNextOperations(25).Where(o => o is TurnOnValveInRoomOperation turnOnValveInRoomOperation)
+                .Cast<TurnOnValveInRoomOperation>().Single(r => r.Room.Valve.Name == "DD");
+
+            Assert.Equal(Actor.Actor1, operation.Actor);
+            Assert.Equal(24, operation.TimeForActorsNextAction());
+
+            return sequence.AddOperation(operation);
+        }
+        
+        CandidateSequenceFor2Actors Actor2OpensValveBB(CandidateSequenceFor2Actors sequence)
+        {
+            var operation = sequence
+                .GetPossibleNextOperations(25).Where(o => o is TurnOnValveInRoomOperation turnOnValveInRoomOperation)
+                .Cast<TurnOnValveInRoomOperation>().Single(r => r.Room.Valve.Name == "BB");
+
+            Assert.Equal(Actor.Actor2, operation.Actor);
+            Assert.Equal(24, operation.TimeForActorsNextAction());
+
+            return sequence.AddOperation(operation);
+        }
+        
+        CandidateSequenceFor2Actors Actor1MoveToValveHH(CandidateSequenceFor2Actors sequence)
+        {
+            var operation = sequence
+                .GetPossibleNextOperations(24).Where(o => o is MoveToRoomOperation moveToRoomOperation)
+                .Cast<MoveToRoomOperation>().Single(r => r.NewRoom.Valve.Name == "HH");
+        
+            Assert.Equal(Actor.Actor1, operation.Actor);
+            Assert.Equal(20, operation.TimeForActorsNextAction());
+
+            return sequence.AddOperation(operation);
+        }
+    }
 
     [Fact]
     public void SequenceOutputsCorrectTotalPressure()
@@ -38,7 +124,7 @@ public class Day16Tests
         var roomsWithClosedValves = new HashSet<Room>(network.RoomsWithValvesToBeOpened);
 
         var startingSequence =
-            new CandidateSequenceFor2Actors(startingRoom, Enumerable.Empty<IOperation>(), roomsWithClosedValves);
+            new CandidateSequenceFor2Actors(startingRoom, Enumerable.Empty<IOperation>(), roomsWithClosedValves, 26);
 
         var first = Actor1MovesToValveII(startingSequence);
         var second = Actor2MoveToValveDD(first);
