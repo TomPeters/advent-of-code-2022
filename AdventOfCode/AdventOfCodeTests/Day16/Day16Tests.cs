@@ -28,11 +28,12 @@ public class Day16Tests
         Assert.Equal(1707, Day16Puzzle.GetTheMostPressureThatCanBeReleasedByTwoActors(input, 26));
     }
     
+    // Takes 20 minutes to run on my machine, and doesn't yet produce the correct result >_<
     [Fact]
     public void Part2_WorksForRealData()
     {
         var input = ParseInput(FileHelper.ReadFromFile("Day16", "RealData.txt"));
-        Assert.Equal(1707, Day16Puzzle.GetTheMostPressureThatCanBeReleasedByTwoActors(input, 26));
+        Assert.Equal(2139, Day16Puzzle.GetTheMostPressureThatCanBeReleasedByTwoActors(input, 26));
     }
 
     [Fact]

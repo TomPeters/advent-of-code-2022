@@ -17,8 +17,7 @@ public class Day16Puzzle
         var fullNetwork = CompleteNetwork.CreateNetwork(scannedOutput);
         var simplifiedNetwork = SimplifiedNetwork.Create(fullNetwork);
         var allCandidateSequences = simplifiedNetwork.GetAllCandidateSequencesForTwoConcurrentActors(timeToComplete);
-        var candidateSequenceFor2Actors = allCandidateSequences.MaxBy(s => s.GetTotalPressureReleased());
-        return candidateSequenceFor2Actors.GetTotalPressureReleased();
+        return allCandidateSequences.Max(s => s.GetTotalPressureReleased());
     }
 }
 
@@ -175,7 +174,7 @@ public class SimplifiedNetwork
         {
             var sequenceWithNextStep = sequenceSoFar.AddOperation(operation);
             foreach (var nextSequence
-                     in GetAllCandidateSequencesFor2Actors(sequenceWithNextStep.GetTimeForNextActor(), sequenceWithNextStep))
+                     in GetAllCandidateSequencesFor2Actors(sequenceWithNextStep.GetTimeForNextActor(), sequenceWithNextStep).AsParallel())
             {
                 yield return nextSequence;
             }
