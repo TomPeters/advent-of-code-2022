@@ -157,7 +157,7 @@ public class SimplifiedNetwork
         // To avoid opening the valve in this starting room, we exclude it from this collection
         var roomsWithValvesToBeOpened = _allRooms.Except(new [] {startingRoom});
         return GetAllCandidateSequencesFor2Actors(timeToComplete,
-            new CandidateSequenceFor2Actors(startingRoom, Array.Empty<IOperation>(), new HashSet<Room>(roomsWithValvesToBeOpened)));
+            new CandidateSequenceFor2Actors(startingRoom, Array.Empty<IOperation>(), new HashSet<Room>(roomsWithValvesToBeOpened), timeToComplete));
     }
 
     public Room[] RoomsWithValvesToBeOpened => _allRooms.Where(r => r.Valve.FlowRate > 0).ToArray();
@@ -175,7 +175,7 @@ public class SimplifiedNetwork
         {
             var sequenceWithNextStep = sequenceSoFar.AddOperation(operation);
             foreach (var nextSequence
-                     in GetAllCandidateSequencesFor2Actors(sequenceSoFar.GetTimeForNextActor() ?? timeRemaining, sequenceWithNextStep))
+                     in GetAllCandidateSequencesFor2Actors(sequenceWithNextStep.GetTimeForNextActor(), sequenceWithNextStep))
             {
                 yield return nextSequence;
             }
@@ -271,12 +271,14 @@ public class CandidateSequenceFor2Actors
 {
     private readonly Room _startingRoom;
     private readonly HashSet<Room> _roomsWithClosedValves;
+    private readonly int _startingTime;
     private readonly IOperation[] _operations;
 
-    public CandidateSequenceFor2Actors(Room startingRoom, IEnumerable<IOperation> operations, HashSet<Room> roomsWithClosedValves)
+    public CandidateSequenceFor2Actors(Room startingRoom, IEnumerable<IOperation> operations, HashSet<Room> roomsWithClosedValves, int startingTime)
     {
         _startingRoom = startingRoom;
         _roomsWithClosedValves = roomsWithClosedValves;
+        _startingTime = startingTime;
         _operations = operations.ToArray();
     }
 
@@ -287,12 +289,12 @@ public class CandidateSequenceFor2Actors
         var roomsWithClosedValves = roomWithOpenedValve == null
             ? _roomsWithClosedValves
             : new HashSet<Room>(_roomsWithClosedValves.Except(new[] { roomWithOpenedValve }));
-        return new CandidateSequenceFor2Actors(_startingRoom, operations, roomsWithClosedValves);
+        return new CandidateSequenceFor2Actors(_startingRoom, operations, roomsWithClosedValves, _startingTime);
     }
 
-    public int? GetTimeForNextActor()
+    public int GetTimeForNextActor()
     {
-        return new[] { Actor.Actor1, Actor.Actor2 }.Select(a => _operations.LastOrDefault(o => o.Actor == a)?.TimeForActorsNextAction()).Max();
+        return new[] { Actor.Actor1, Actor.Actor2 }.Select(a => _operations.LastOrDefault(o => o.Actor == a)?.TimeForActorsNextAction() ?? _startingTime).Max();
     }
 
     public int GetTotalPressureReleased() => _operations.Sum(o => o.GetPressureReleased());
@@ -318,7 +320,15 @@ public class CandidateSequenceFor2Actors
         if (!lastOperationWasAMove)
         {
             var otherRoomsWithClosedValves = _roomsWithClosedValves.Except(new[] { actorsCurrentRoom })
-                .Select(r => new MoveToRoomOperation(timeRemaining, actorsCurrentRoom, r, currentActor));
+                .Select(r =>
+                {
+                    if (timeRemaining == 25 && currentActor == Actor.Actor1 && r.Valve.Name == "HH" &&
+                        actorsCurrentRoom.Valve.Name == "DD")
+                    {
+                        Debugger.Break();
+                    }
+                    return new MoveToRoomOperation(timeRemaining, actorsCurrentRoom, r, currentActor);
+                });
             foreach (var moveToRoomOperation in otherRoomsWithClosedValves)
             {
                 yield return moveToRoomOperation;
