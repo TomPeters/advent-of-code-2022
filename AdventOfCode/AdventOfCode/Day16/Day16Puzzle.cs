@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace AdventOfCode.Day16;
 
 public class Day16Puzzle
@@ -189,7 +191,11 @@ public class SimplifiedNetwork
 
     IEnumerable<CandidateSequence> GetAllCandidateSequences(int timeRemaining, CandidateSequence sequenceSoFar)
     {
-        var possibleOperations = sequenceSoFar.GetPossibleNextOperations(timeRemaining).Where(o => o.TimeForActorsNextAction() <= timeRemaining).ToArray();
+        if (timeRemaining < 0)
+        {
+            Debugger.Break();
+        }
+        var possibleOperations = sequenceSoFar.GetPossibleNextOperations(timeRemaining).Where(o => o.TimeRequiredToExecute() <= timeRemaining).ToArray();
 
         if (timeRemaining == 0 || !possibleOperations.Any())
         {
@@ -200,7 +206,7 @@ public class SimplifiedNetwork
         {
             var sequenceWithNextStep = sequenceSoFar.AddOperation(operation);
             foreach (var nextSequence
-                     in GetAllCandidateSequences(timeRemaining - operation.TimeForActorsNextAction(), sequenceWithNextStep))
+                     in GetAllCandidateSequences(operation.TimeForActorsNextAction(), sequenceWithNextStep))
             {
                 yield return nextSequence;
             }
