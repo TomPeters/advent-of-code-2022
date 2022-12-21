@@ -89,6 +89,8 @@ public class SimplifiedNetwork
 {
     private readonly Room[] _allRooms;
 
+    public Room GetRoom(string valveName) => _allRooms.First(r => r.Valve.Name == valveName);
+
     private SimplifiedNetwork(IEnumerable<Room> rooms)
     {
         _allRooms = rooms.ToArray();
@@ -157,6 +159,8 @@ public class SimplifiedNetwork
         return GetAllCandidateSequencesFor2Actors(timeToComplete,
             new CandidateSequenceFor2Actors(startingRoom, Array.Empty<IOperation>(), new HashSet<Room>(roomsWithValvesToBeOpened)));
     }
+
+    public Room[] RoomsWithValvesToBeOpened => _allRooms.Where(r => r.Valve.FlowRate > 0).ToArray();
 
     IEnumerable<CandidateSequenceFor2Actors> GetAllCandidateSequencesFor2Actors(int timeRemaining, CandidateSequenceFor2Actors sequenceSoFar)
     {
@@ -295,8 +299,9 @@ public class CandidateSequenceFor2Actors
 
     public IEnumerable<IOperation> GetPossibleNextOperations(int timeRemaining)
     {
+        var timings = new[] { Actor.Actor1, Actor.Actor2 }.Select(a => (a, _operations.LastOrDefault(o => o.Actor == a)?.TimeForActorsNextAction() ?? timeRemaining));
         var currentActor = !_operations.Any() ? Actor.Actor1 :
-            new[] { Actor.Actor1, Actor.Actor2 }.Select(a => (a, _operations.LastOrDefault(o => o.Actor == a)?.TimeForActorsNextAction() ?? timeRemaining)).MaxBy(t => t.Item2).a;
+            timings.MaxBy(t => t.Item2).a;
 
         var operationsForCurrentActors = _operations.Where(o => o.Actor == currentActor).ToArray();
         
